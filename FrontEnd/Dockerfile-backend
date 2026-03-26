@@ -1,0 +1,21 @@
+FROM node:18-bullseye-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y openssl libssl1.1 ca-certificates && rm -rf /var/lib/apt/lists/*
+
+COPY api/package*.json ./
+
+RUN npm install
+
+COPY api/tsconfig.json ./
+COPY api/.next/ ./.next/
+COPY api/lib/ ./lib/
+COPY api/prisma/ ./prisma/
+COPY api/.env ./
+
+RUN npx prisma generate
+
+EXPOSE 3000
+
+CMD ["npm", "run", "start"]

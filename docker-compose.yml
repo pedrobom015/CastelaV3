@@ -1,0 +1,84 @@
+version: "3.8"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: castela-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${CASTELA_SECRET_PASSWORD:-root}
+      MYSQL_DATABASE: ${CASTELA_DB:-casteladb}
+      MYSQL_USER: ${CASTELA_USER:-castela}
+      MYSQL_PASSWORD: ${CASTELA_SECRET_PASSWORD:-root}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - castela-network
+
+  backend:
+    build:
+      context: ./BackEnd
+      dockerfile: Dockerfile
+    container_name: castela-backend
+    restart: unless-stopped
+    environment:
+      CASTELA_USER: ${CASTELA_USER:-root}
+      CASTELA_SECRET_PASSWORD: ${CASTELA_SECRET_PASSWORD:-root}
+      CASTELA_ADDRESS: db
+      CASTELA_DB: ${CASTELA_DB:-casteladb}
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
+      DEBUG: ${DEBUG:-False}
+    ports:
+      - "8000:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./BackEnd:/app
+    networks:
+      - castela-network
+    command: fastapi run main.py --host 0.0.0.0 --port 80
+
+  frontend:
+    build:
+      context: ./FrontEnd/frontend
+      dockerfile: Dockerfile-frontend1
+    container_name: castela-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - castela-network
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: castela-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./FrontEnd/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./FrontEnd/nginx/cert.pem:/etc/nginx/certs/cert.pem:ro
+      - ./FrontEnd/nginx/privkey.pem:/etc/nginx/certs/privkey.pem:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - castela-network
+
+volumes:
+  mysql_data:
+
+networks:
+  castela-network:
+    driver: bridge
