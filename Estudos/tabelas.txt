@@ -1,0 +1,208 @@
+CREATE TABLE schema_version  - Versionamento da base de dados
+CREATE TABLE gender( tabelas - gerais - Gêneros) 
+CREATE TABLE document_type( tabelas - auxiliares - Tipos de Documento)
+CREATE TABLE address_type( tabelas - auxiliares - Tipos de Endereço)
+CREATE TABLE payment_status( 
+CREATE TABLE estado( tabelas - gerais - Estados)
+CREATE TABLE cidade( tabelas - gerais - Cidades) 
+CREATE TABLE currency (tabelas - gerais - Moedas) 
+CREATE TABLE general_status 
+CREATE TABLE sys_group( 
+CREATE TABLE sys_group_program( 
+CREATE TABLE sys_preference( 
+CREATE TABLE sys_program( 
+CREATE TABLE sys_unit( 
+CREATE TABLE sys_user_group( 
+CREATE TABLE sys_user_program( 
+CREATE TABLE sys_user( 
+CREATE TABLE address(tabelas - Endereços) 
+CREATE TABLE entity_address (tabelas - auxiliares - Vinculos de Endereço)
+CREATE TABLE company (tabelas - gerais - Empresas)
+CREATE TABLE sys_user_unit( 
+CREATE TABLE user_company_access (
+CREATE TABLE entity_sys_user (
+CREATE TABLE subsidiary( tabelas - gerais - Filiais)
+CREATE TABLE partner_type (tabelas - auxiliares - Tipos de Parceiro)
+CREATE TABLE account_type (Financeiro - tabelas???)
+CREATE TABLE classe( 
+CREATE TABLE group_batch(Contratos - tabelas - Grupos)
+CREATE TABLE document(tabelas - Documentos) 
+CREATE TABLE entity_document (tabelas - auxiliares - Vinculos de Documento) 
+CREATE TABLE partner (tabelas - Parceiros)
+CREATE TABLE contract(Contratos - Lançamentos)
+CREATE TABLE performed_service( 
+CREATE TABLE service_funeral (Atendimento - 
+CREATE TABLE beneficiary(Contratos - Lançamentos)
+CREATE TABLE contract_charge(Contratos - Lançamentos)
+CREATE TABLE addendum( 
+CREATE TABLE contract_addendum(Contratos - Lançamentos)
+CREATE TABLE account (Financeiro - tabelas???) 
+CREATE TABLE partner (tabelas - Parceiros)
+CREATE TABLE account_type (
+CREATE TABLE account (
+
+
+
+
+
+
+CREATE TABLE partner_bank_account (Financeiro - 
+CREATE TABLE billing_rates (
+CREATE TABLE bank_slip(Contratos - Tabelas???)
+CREATE TABLE contract_status( 
+CREATE TABLE contract_status_history( 
+CREATE TABLE payment_receipt(Atendimento - Lançamentos)
+CREATE TABLE medical_foward(Atendimento - Lançamentos)
+CREATE TABLE ordpgrc(Tabelas - Gerais - Caixas)
+CREATE TABLE carteirinha( 
+CREATE TABLE equipament_rental( 
+CREATE TABLE batch_chk( 
+CREATE TABLE batch_detail( 
+-- TABLES (MAIN ADM TABLES)  
+
+CREATE TABLE charge(Contratos - tabelas - circulares) 
+CREATE TABLE prorated_service(Contratos - tabelas - Serviços Executados)
+-- TABLES (GENERAL TABLES)  
+CREATE TABLE service_type( 
+CREATE TABLE specialty(Tabelas - Gerais - Especialides)
+CREATE TABLE status_possible( 
+CREATE TABLE status_reason( 
+CREATE TABLE death_event (
+CREATE TABLE contract_active( 
+CREATE TABLE group_class( 
+CREATE TABLE age_addendum( 
+CREATE TABLE billing_cycle (
+CREATE TABLE contract_billing (
+CREATE TABLE payment_plan (
+CREATE TABLE payment_plan_installment (
+CREATE TABLE payment_transaction (
+CREATE TABLE billing_rule (
+CREATE TABLE billing_rule_application (
+CREATE TABLE cep_cache( 
+CREATE TABLE api_error( 
+CREATE TABLE audit_log( 
+
+-- CORE TABLES (with improvements)
+CREATE TABLE warehouse (
+CREATE TABLE storage_location (
+CREATE TABLE product_category (
+CREATE TABLE brand (
+CREATE TABLE units_of_measurement (
+CREATE TABLE product (
+CREATE TABLE attribute_type (
+CREATE TABLE attribute_value (
+CREATE TABLE product_variation (
+CREATE TABLE variation_attribute (
+CREATE TABLE product_pricing (
+CREATE TABLE product_image (
+CREATE TABLE supplier (
+CREATE TABLE product_supplier (
+CREATE TABLE stock_level (
+CREATE TABLE stock_movement_type (
+CREATE TABLE stock_movement (
+CREATE TABLE stock_count (
+CREATE TABLE stock_count_item (
+CREATE TABLE stock_reservation  (
+CREATE TABLE batch_tracking (
+CREATE TABLE serial_tracking (
+CREATE TABLE purchase_requisition (
+CREATE TABLE purchase_requisition_item (
+CREATE TABLE request_for_quotation (
+CREATE TABLE rfq_item (
+CREATE TABLE rfq_supplier (
+CREATE TABLE supplier_quotation (
+CREATE TABLE supplier_quotation_item (
+CREATE TABLE purchase_order (
+CREATE TABLE purchase_order_item (
+CREATE TABLE goods_receipt (
+CREATE TABLE goods_receipt_item (
+CREATE TABLE supplier_return (
+CREATE TABLE supplier_return_item (
+CREATE TABLE customer (
+CREATE TABLE sales_order (
+CREATE TABLE sales_order_item (
+CREATE TABLE sales_allocation (
+CREATE TABLE shipment (
+CREATE TABLE shipment_item (
+CREATE TABLE customer_return (
+CREATE TABLE customer_return_item  (
+CREATE TABLE warehouse_transfer  (
+CREATE TABLE warehouse_transfer_item (
+CREATE TABLE inventory_adjustment  (
+CREATE TABLE inventory_adjustment_item (
+CREATE TABLE sys_program( -- Moved sys_program before sys_group_program
+CREATE TABLE sys_group(
+CREATE TABLE sys_group_program(
+CREATE TABLE sys_preference(
+CREATE TABLE sys_unit(
+CREATE TABLE sys_user (
+CREATE TABLE sys_user_group(
+CREATE TABLE sys_user_program(
+CREATE TABLE sys_user_unit(
+CREATE TABLE audit_log (
+-- AUDIT LOG ARCHIVE TABLE (Added)
+CREATE TABLE audit_log_archive LIKE audit_log;
+-- PARTITIONING FOR LARGE TABLES (
+ALTER TABLE stock_movement PARTITION BY RANGE (YEAR(movement_date)) (
+    OPTIMIZE TABLE stock_movement, stock_level, audit_log;
+    -- Ensure audit_log_archive table is created, e.g., CREATE TABLE audit_log_archive LIKE audit_log;
+
+
+CREATE TABLE bank_account (
+CREATE TABLE fiscal_year (
+CREATE TABLE fiscal_period (
+CREATE TABLE cost_center (
+CREATE TABLE department (
+CREATE TABLE project (
+CREATE TABLE accounting_code (
+CREATE TABLE tax_code (
+CREATE TABLE contact_type (
+CREATE TABLE contact (
+CREATE TABLE contact_bank_account (
+CREATE TABLE journal_type (
+CREATE TABLE journal (
+CREATE TABLE journal_line (
+CREATE TABLE journal_attachment (
+CREATE TABLE payment_method (
+CREATE TABLE transaction_type (
+CREATE TABLE transaction (
+CREATE TABLE transaction_allocation (
+CREATE TABLE bank_reconciliation (
+CREATE TABLE reconciliation_item (
+CREATE TABLE budget (
+CREATE TABLE budget_item (
+CREATE TABLE budget_period (
+CREATE TABLE report_definition (
+CREATE TABLE account_daily_balance (
+CREATE TABLE account_period_balance (
+CREATE TABLE financial_ratio (
+CREATE TABLE financial_ratio_value (
+-- INTEGRATION TABLES (FOR ERP)
+CREATE TABLE integration_setting (
+CREATE TABLE integration_mapping (
+CREATE TABLE integration_sync_log (
+CREATE TABLE sys_setting (
+CREATE TABLE sys_audit_log (
+CREATE TABLE validation_rule (
+CREATE TABLE vehicle_status (
+CREATE TABLE vehicle_type (
+CREATE TABLE driver_status (
+CREATE TABLE service_type ( -- for maintenance
+CREATE TABLE maintenance_status (
+CREATE TABLE vehicle_request_type (
+CREATE TABLE vehicle_request_status (
+CREATE TABLE trip_status (
+CREATE TABLE expense_type (
+CREATE TABLE vehicle_expense_status (
+CREATE TABLE vehicle (
+CREATE TABLE driver (
+CREATE TABLE maintenance (
+CREATE TABLE vehicle_request (
+CREATE TABLE trip (
+CREATE TABLE vehicle_expense (
+CREATE TABLE vehicle_document (
+CREATE TABLE driver_document (
+CREATE TABLE maintenance_document (
+CREATE TABLE trip_document (
+CREATE TABLE log_event_type (
+CREATE TABLE vehicle_daily_log (

@@ -1,0 +1,231 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	body {
+		@apply text-gray-900 bg-gray-100;
+		font-family:
+			system-ui,
+			-apple-system,
+			BlinkMacSystemFont,
+			"Segoe UI",
+			sans-serif;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+}
+
+/* Recharts — remove fundo cinza no hover das barras */
+.recharts-responsive-container .recharts-rectangle.recharts-tooltip-cursor {
+	fill: transparent !important;
+}
+
+@layer components {
+	.form-grid-2 {
+		@apply grid grid-cols-2 gap-3;
+	}
+	.form-grid-3 {
+		@apply grid grid-cols-3 gap-3;
+	}
+	.form-grid-4 {
+		@apply grid grid-cols-4 gap-3;
+	}
+}
+
+/* Estilos de impressão */
+@media print {
+	.no-print {
+		display: none !important;
+	}
+	body {
+		background: white !important;
+	}
+	.print-page {
+		page-break-after: always;
+	}
+	[data-print-table] {
+		display: table !important;
+	}
+}
+
+/* Transição de abas */
+@keyframes tab-fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+.tab-content {
+	animation: tab-fade-in 0.18s ease-out both;
+}
+
+.fixed-width-tab {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+.fixed-width-tab::after {
+	content: attr(data-text);
+	content: attr(data-text) / "";
+	height: 0;
+	visibility: hidden;
+	overflow: hidden;
+	user-select: none;
+	pointer-events: none;
+	font-weight: bold;
+}
+
+/* ── Formulário compacto dentro de expand rows ──
+   Ajuste os valores abaixo para controlar o espaçamento global */
+.form-compact {
+	--fc-section-p: 0.25rem; /* padding interno do fieldset */
+	--fc-section-gap: 0.375rem; /* gap entre linhas do FormSection */
+	--fc-row-gap: 0.5rem; /* gap entre colunas do FormRow */
+	--fc-outer-mb: 0.25rem; /* mb entre seções */
+}
+.form-compact fieldset {
+	padding: var(--fc-section-p) !important;
+}
+.form-compact fieldset > .grid {
+	gap: var(--fc-section-gap) !important;
+}
+.form-compact .grid.items-start {
+	gap: var(--fc-row-gap) !important;
+}
+.form-compact fieldset {
+	margin-bottom: var(--fc-outer-mb) !important;
+}
+
+/* Ícone de impressão sempre visível na row expandida */
+.row-expanded .group-hover\:visible { visibility: visible; }
+
+/* Expansão inline de row */
+@keyframes expand-down {
+	from {
+		opacity: 0;
+		max-height: 0;
+		transform: translateY(-6px);
+	}
+	to {
+		opacity: 1;
+		max-height: 800px;
+		transform: translateY(0);
+	}
+}
+.expand-down {
+	animation: expand-down 0.22s ease-out both;
+	overflow: hidden;
+}
+
+/* ── Hover sobre bg-blue-900: texto sempre branco em qualquer tema ── */
+html.theme-orange .hover\:bg-blue-900:hover,
+html.theme-orange .hover\:bg-blue-900:hover *,
+html.theme-gray .hover\:bg-blue-900:hover,
+html.theme-gray .hover\:bg-blue-900:hover * {
+	color: white !important;
+}
+
+/* ── Tema Laranja — sobrescreve blue-900 em todo o app ── */
+html.theme-orange .bg-blue-900 {
+	background-color: #ff914d !important;
+}
+html.theme-orange .hover\:bg-blue-900:hover {
+	background-color: #ff914d !important;
+}
+html.theme-orange .bg-blue-800 {
+	background-color: #e07a39 !important;
+}
+html.theme-orange .hover\:bg-blue-800:hover {
+	background-color: #e07a39 !important;
+}
+html.theme-orange .text-blue-900 {
+	color: #ff914d !important;
+}
+html.theme-orange .border-blue-900 {
+	border-color: #ff914d !important;
+}
+html.theme-orange .ring-blue-900,
+html.theme-orange .focus\:ring-blue-900:focus {
+	--tw-ring-color: #ff914d !important;
+}
+html.theme-orange .bg-blue-50 {
+	background-color: #fff8f4 !important;
+}
+html.theme-orange .bg-blue-100 {
+	background-color: #ffe8d6 !important;
+}
+html.theme-orange .border-blue-400 {
+	border-color: #ffa96a !important;
+}
+html.theme-orange .text-blue-200 {
+	color: #ffd4b8 !important;
+}
+
+/* ── Tema Cinza — sobrescreve blue-900 em todo o app ── */
+html.theme-gray .bg-blue-900 {
+	background-color: #248094 !important;
+}
+html.theme-gray .hover\:bg-blue-900:hover {
+	background-color: #248094 !important;
+}
+html.theme-gray .bg-blue-800 {
+	background-color: #1a6070 !important;
+}
+html.theme-gray .hover\:bg-blue-800:hover {
+	background-color: #1a6070 !important;
+}
+html.theme-gray .text-blue-900 {
+	color: #248094 !important;
+}
+html.theme-gray .border-blue-900 {
+	border-color: #248094 !important;
+}
+html.theme-gray .ring-blue-900,
+html.theme-gray .focus\:ring-blue-900:focus {
+	--tw-ring-color: #248094 !important;
+}
+html.theme-gray .bg-blue-50 {
+	background-color: #f8fafc !important;
+}
+html.theme-gray .text-blue-200 {
+	color: #cbd5e1 !important;
+}
+html.theme-gray .bg-blue-600 {
+	background-color: #248094 !important;
+}
+html.theme-gray .border-blue-100 {
+	border-color: #e2e8f0 !important;
+}
+html.theme-gray .border-blue-400 {
+	border-color: #248094 !important;
+}
+html.theme-gray .bg-blue-100 {
+	background-color: #d0eaf0 !important;
+}
+html.theme-gray .text-blue-600 {
+	color: #248094 !important;
+}
+
+/* Scrollbar customizada */
+::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+::-webkit-scrollbar-track {
+	background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+	background: #888;
+	border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+	background: #555;
+}

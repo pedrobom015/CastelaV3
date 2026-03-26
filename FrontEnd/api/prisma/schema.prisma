@@ -1,0 +1,30 @@
+// prisma/schema.prisma
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "windows", "linux-musl"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model client {
+  clientKey String   @id @map("client_key") // PRIMARY KEY (client_key)
+  name      String?  @map("name") // DEFAULT NULL
+  dateValid DateTime @map("date_valid") // NOT NULL
+  timeleft  Int      @map("timeleft") // NOT NULL
+  createdAt DateTime @default(now()) @map("created_at") // DEFAULT CURRENT_TIMESTAMP
+  updatedAt DateTime @updatedAt @map("updated_at") // DEFAULT CURRENT_TIMESTAMP ON UPDATE
+}
+
+model device {
+  id          Int       @id @default(autoincrement()) @map("id") // PRIMARY KEY (id)
+  machineName String    @map("device_name") // DEFAULT NULL
+  keepaliveTs DateTime? @map("keepalive_ts") // DEFAULT NULL
+  clientKey   String?   @map("client_key") // Chave estrangeira para Client
+  moduleKey   String?   @map("module_key") // DEFAULT NULL
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+}

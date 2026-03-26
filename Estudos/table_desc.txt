@@ -1,0 +1,208 @@
+schema_version  - Versionamento da base de dados
+gender, v0 ( tabelas - gerais - Gêneros) 
+document_type, v0 ( tabelas - auxiliares - Tipos de Documento)
+address_type, v0 ( tabelas - auxiliares - Tipos de Endereço)
+payment_status, v0 ( 
+estado, v0 ( tabelas - gerais - Estados)
+cidade, v0 ( tabelas - gerais - Cidades) 
+currency, v0 (tabelas - gerais - Moedas) 
+general_status 
+sys_group, v0 ( 
+sys_group_program, v0 ( 
+sys_preference, v0 ( 
+sys_program, v0 ( 
+sys_unit, v0 ( 
+sys_user_group, v0 ( 
+sys_user_program, v0 ( 
+sys_user, v0 ( 
+address, v0 (tabelas - Endereços) 
+entity_address, v0 (tabelas - auxiliares - Vinculos de Endereço)
+company, v0 (tabelas - gerais - Empresas)
+sys_user_unit, v0 ( 
+user_company_access, v0 (
+entity_sys_user, v0 (
+subsidiary, v0 ( tabelas - gerais - Filiais)
+partner_type, v0 (tabelas - auxiliares - Tipos de Parceiro)
+account_type, v0 (Financeiro - tabelas???)
+classe, v0 ( 
+group_batch, v0 (Contratos - tabelas - Grupos)
+document, v0 (tabelas - Documentos) 
+entity_document, v0 (tabelas - auxiliares - Vinculos de Documento) 
+partner, v0 (tabelas - Parceiros)
+contract, v0 (Contratos - Lançamentos)
+performed_service, v0 ( 
+service_funeral, v0 (Atendimento - 
+beneficiary, v0 (Contratos - Lançamentos)
+contract_charge, v0 (Contratos - Lançamentos)
+addendum, v0 ( 
+contract_addendum, v0 (Contratos - Lançamentos)
+account, v0 (Financeiro - tabelas???) 
+partner, v0 (tabelas - Parceiros)
+account_type, v0 (
+account, v0 (
+
+
+
+
+
+
+partner_bank_account, v0 (Financeiro - 
+billing_rates, v0 (
+bank_slip, v0 (Contratos - Tabelas???)
+contract_status, v0 ( 
+contract_status_history, v0 ( 
+payment_receipt, v0 (Atendimento - Lançamentos)
+medical_foward, v0 (Atendimento - Lançamentos)
+ordpgrc, v0 (Tabelas - Gerais - Caixas)
+carteirinha, v0 ( 
+equipament_rental, v0 ( 
+batch_chk, v0 ( 
+batch_detail, v0 ( 
+-- TABLES, v0 (MAIN ADM TABLES)  
+
+charge, v0 (Contratos - tabelas - circulares) 
+prorated_service, v0 (Contratos - tabelas - Serviços Executados)
+-- TABLES, v0 (GENERAL TABLES)  
+service_type, v0 ( 
+specialty, v0 (Tabelas - Gerais - Especialides)
+status_possible, v0 ( 
+status_reason, v0 ( 
+death_event, v0 (
+contract_active, v0 ( 
+group_class, v0 ( 
+age_addendum, v0 ( 
+billing_cycle, v0 (
+contract_billing, v0 (
+payment_plan, v0 (
+payment_plan_installment, v0 (
+payment_transaction, v0 (
+billing_rule, v0 (
+billing_rule_application, v0 (
+cep_cache, v0 ( 
+api_error, v0 ( 
+audit_log, v0 ( 
+
+-- CORE TABLES, v0 (with improvements)
+warehouse, v0 (
+storage_location, v0 (
+product_category, v0 (
+brand, v0 (
+units_of_measurement, v0 (
+product, v0 (
+attribute_type, v0 (
+attribute_value, v0 (
+product_variation, v0 (
+variation_attribute, v0 (
+product_pricing, v0 (
+product_image, v0 (
+supplier, v0 (
+product_supplier, v0 (
+stock_level, v0 (
+stock_movement_type, v0 (
+stock_movement, v0 (
+stock_count, v0 (
+stock_count_item, v0 (
+stock_reservation , v0 (
+batch_tracking, v0 (
+serial_tracking, v0 (
+purchase_requisition, v0 (
+purchase_requisition_item, v0 (
+request_for_quotation, v0 (
+rfq_item, v0 (
+rfq_supplier, v0 (
+supplier_quotation, v0 (
+supplier_quotation_item, v0 (
+purchase_order, v0 (
+purchase_order_item, v0 (
+goods_receipt, v0 (
+goods_receipt_item, v0 (
+supplier_return, v0 (
+supplier_return_item, v0 (
+customer, v0 (
+sales_order, v0 (
+sales_order_item, v0 (
+sales_allocation, v0 (
+shipment, v0 (
+shipment_item, v0 (
+customer_return, v0 (
+customer_return_item , v0 (
+warehouse_transfer , v0 (
+warehouse_transfer_item, v0 (
+inventory_adjustment , v0 (
+inventory_adjustment_item, v0 (
+sys_program, v0 ( -- Moved sys_program before sys_group_program
+sys_group, v0 (
+sys_group_program, v0 (
+sys_preference, v0 (
+sys_unit, v0 (
+sys_user, v0 (
+sys_user_group, v0 (
+sys_user_program, v0 (
+sys_user_unit, v0 (
+audit_log, v0 (
+-- AUDIT LOG ARCHIVE TABLE, v0 (Added)
+audit_log_archive LIKE audit_log;
+-- PARTITIONING FOR LARGE TABLES, v0 (
+ALTER TABLE stock_movement PARTITION BY RANGE, v0 (YEAR, v0 (movement_date)), v0 (
+    OPTIMIZE TABLE stock_movement, stock_level, audit_log;
+    -- Ensure audit_log_archive table is created, e.g., audit_log_archive LIKE audit_log;
+
+
+bank_account, v0 (
+fiscal_year, v0 (
+fiscal_period, v0 (
+cost_center, v0 (
+department, v0 (
+project, v0 (
+accounting_code, v0 (
+tax_code, v0 (
+contact_type, v0 (
+contact, v0 (
+contact_bank_account, v0 (
+journal_type, v0 (
+journal, v0 (
+journal_line, v0 (
+journal_attachment, v0 (
+payment_method, v0 (
+transaction_type, v0 (
+transaction, v0 (
+transaction_allocation, v0 (
+bank_reconciliation, v0 (
+reconciliation_item, v0 (
+budget, v0 (
+budget_item, v0 (
+budget_period, v0 (
+report_definition, v0 (
+account_daily_balance, v0 (
+account_period_balance, v0 (
+financial_ratio, v0 (
+financial_ratio_value, v0 (
+-- INTEGRATION TABLES, v0 (FOR ERP)
+integration_setting, v0 (
+integration_mapping, v0 (
+integration_sync_log, v0 (
+sys_setting, v0 (
+sys_audit_log, v0 (
+validation_rule, v0 (
+vehicle_status, v0 (
+vehicle_type, v0 (
+driver_status, v0 (
+service_type, v0 ( -- for maintenance
+maintenance_status, v0 (
+vehicle_request_type, v0 (
+vehicle_request_status, v0 (
+trip_status, v0 (
+expense_type, v0 (
+vehicle_expense_status, v0 (
+vehicle, v0 (
+driver, v0 (
+maintenance, v0 (
+vehicle_request, v0 (
+trip, v0 (
+vehicle_expense, v0 (
+vehicle_document, v0 (
+driver_document, v0 (
+maintenance_document, v0 (
+trip_document, v0 (
+log_event_type, v0 (
+vehicle_daily_log, v0 (

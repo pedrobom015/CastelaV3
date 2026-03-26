@@ -1,0 +1,81 @@
+-- -----------------------------------------------------------------------------
+-- PARTE 13: REGRAS DE COBRAN€A E ENCAMINHAMENTOS
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS billing_rule (
+    billing_rule_id INT UNSIGNED AUTO_INCREMENT NOT NULL,
+    sys_unit_id INT UNSIGNED NOT NULL,
+    sys_user_id INT UNSIGNED NOT NULL,
+    rule_name VARCHAR(100) NOT NULL,
+    industry VARCHAR(50) NOT NULL,
+    description TEXT,
+    condition_expression TEXT,
+    charge_expression TEXT,
+    is_active TINYINT DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    created_by INT UNSIGNED,
+    updated_by INT UNSIGNED,
+    deleted_by INT UNSIGNED,
+    PRIMARY KEY (billing_rule_id),
+    INDEX idx_billing_rule_unit (sys_unit_id),
+    CONSTRAINT fk_billing_rule_unit FOREIGN KEY (sys_unit_id) REFERENCES sys_unit(sys_unit_id),
+    CONSTRAINT fk_billing_rule_user FOREIGN KEY (sys_user_id) REFERENCES sys_user(sys_user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS billing_rule_application (
+    billing_rule_application_id INT UNSIGNED AUTO_INCREMENT NOT NULL,
+    sys_unit_id INT UNSIGNED NOT NULL,
+    sys_user_id INT UNSIGNED NOT NULL,
+    rule_id INT UNSIGNED NOT NULL,
+    entity_type VARCHAR(50) NOT NULL COMMENT 'CONTRACT, GROUP, SERVICE',
+    entity_id INT NOT NULL,
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    applied_by INT UNSIGNED,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    created_by INT UNSIGNED,
+    updated_by INT UNSIGNED,
+    deleted_by INT UNSIGNED,
+    PRIMARY KEY (billing_rule_application_id),
+    INDEX idx_billing_rule_app_rule (rule_id),
+    INDEX idx_billing_rule_app_entity (entity_type, entity_id),
+    CONSTRAINT fk_billing_rule_app_rule FOREIGN KEY (rule_id) REFERENCES billing_rule(billing_rule_id),
+    CONSTRAINT fk_billing_rule_app_unit FOREIGN KEY (sys_unit_id) REFERENCES sys_unit(sys_unit_id),
+    CONSTRAINT fk_billing_rule_app_user FOREIGN KEY (sys_user_id) REFERENCES sys_user(sys_user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS medical_foward( 
+    medical_foward_id INT UNSIGNED AUTO_INCREMENT NOT NULL,
+    sys_unit_id INT UNSIGNED NOT NULL,
+    sys_user_id INT UNSIGNED NOT NULL,
+    partner_id INT UNSIGNED NOT NULL,
+    performed_service_id INT UNSIGNED NOT NULL,
+    observation TEXT,
+    val_payment DECIMAL(19,4),
+    val_aux DECIMAL(19,4),
+    due_date DATE,
+    cashier_number CHAR(8),
+    method_pay VARCHAR(100),
+    obs_pay VARCHAR(200),
+    ordpgrc_id INT UNSIGNED NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    created_by INT UNSIGNED,
+    updated_by INT UNSIGNED,
+    deleted_by INT UNSIGNED,
+    PRIMARY KEY (medical_foward_id),
+    INDEX idx_medical_foward_unit (sys_unit_id),
+    INDEX idx_medical_foward_user (sys_user_id),
+    INDEX idx_medical_foward_partner (partner_id),
+    INDEX idx_medical_foward_service (performed_service_id),
+    CONSTRAINT fk_medical_foward_unit FOREIGN KEY (sys_unit_id) REFERENCES sys_unit(sys_unit_id),
+    CONSTRAINT fk_medical_foward_users FOREIGN KEY (sys_user_id) REFERENCES sys_user(sys_user_id),
+    CONSTRAINT fk_medical_foward_accredit FOREIGN KEY (partner_id) REFERENCES partner(partner_id),
+    CONSTRAINT fk_medical_foward_perfservic FOREIGN KEY (performed_service_id) REFERENCES performed_service(performed_service_id),
+    CONSTRAINT fk_medical_foward_ordpgrc FOREIGN KEY (ordpgrc_id) REFERENCES ordpgrc(ordpgrc_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

@@ -1,0 +1,45 @@
+networks:
+    internal:
+        driver: bridge
+
+services:
+    frontend1:
+        image: presserv-frontend1
+        container_name: presserv-frontend1
+        restart: always
+        networks:
+            - internal
+
+    landing:
+        image: presserv-landing
+        container_name: presserv-landing
+        restart: always
+        networks:
+            - internal
+
+    backend:
+        image: presserv-backend
+        container_name: presserv-backend
+        restart: always
+        volumes:
+            - ./backend/dados-teste:/app/dados-teste
+        networks:
+            - internal
+
+    nginx:
+        image: nginx:latest
+        container_name: presserv-nginx
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+            - ./nginx/cert.pem:/etc/nginx/certs/cert.pem:ro
+            - ./nginx/privkey.pem:/etc/nginx/certs/privkey.pem:ro
+        depends_on:
+            - frontend1
+            - landing
+            - backend
+        restart: always
+        networks:
+            - internal

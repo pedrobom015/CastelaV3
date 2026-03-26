@@ -1,0 +1,181 @@
+Nome da Tabela			Conteúdo Esperado
+account			Contas contábeis (plano de contas)
+account_daily_balance			Saldos diários de contas contábeis
+account_period_balance			Saldos de contas contábeis por período
+account_type			Tipos de contas contábeis (ex: ativo, passivo)
+accounting_code			Códigos de contabilização ou centros de custo
+addendum			Aditivos contratuais
+address			Endereços de entidades (clientes, fornecedores, etc.)
+address_type			Tipos de endereço (ex: comercial, residencial)
+age_addendum			Aditivos relacionados a idades (??? pode ser desnecessário se incluir campos em addendum ???)
+api_error			Registros de erros de integração via API
+attribute_type			Tipos de atributos personalizados
+attribute_value			Valores de atributos personalizados
+audit_log			Log de auditoria geral
+bank_account			Contas bancárias da empresa ou de terceiros
+bank_reconciliation			Conciliações bancárias
+bank_slip			Boletos bancários emitidos
+batch_chk			Lotes de cheques? Ou controle de lotes de processamento
+batch_detail			Detalhes de lotes (itens de um lote)
+batch_tracking			Rastreamento de lotes (produção, validade)
+beneficiary			Beneficiários (inscritos do contrato)
+billing_cycle			Ciclos de faturamento (mensal, anual, etc.)
+billing_rates			Taxas ou tarifas aplicadas no faturamento
+billing_rule			Regras de faturamento
+billing_rule_application			Aplicação das regras de faturamento a contratos ou produtos
+brand			Marcas de produtos 
+budget			Orçamentos (planejamento financeiro)
+budget item			Itens de um orçamento
+budget_period			Períodos de um orçamento
+category			Categorias de contratos 
+cep_cache			Cache de endereços por CEP
+charge			Cobranças (geradas do grupo)
+city			Cidades (versão em inglês)
+company			Empresas (unidades legais)
+contact			Contatos (pessoas físicas ??? substituir por partners ou considerar os contatos nos parceiros???)
+contact_bank_account			Contas bancárias de contatos (??? substituir por partners_bank_account???)
+contact_type			Tipos de contato (??? substituir por partners_type???)
+contract			Contratos
+contract_active			Contratos ativos (tabela de contratos vigentes p/evitar duplicidade no remanejamento)
+contract_addendum			Aditivos de contratos
+contract_billing			Faturamento de contratos (??? para vendas particulares ???)
+contract_charge			Cobranças geradas a partir de contratos de planos
+contract_config_billing			Configurações de faturamento por contrato (terceira tela do contrato)
+contract_covers			Coberturas de contratos (segunda tela do contrato)
+contract_events			Eventos relacionados a contratos (histórico)
+contract_status			Status de contratos
+contract_status_history			Histórico de status de contratos (??? estudar substituição pelo versionamento)
+contract_version			Versões de contratos (??? versionamento ou logs???)
+cost_center			Centros de custo
+currency			Moedas (câmbio)
+customer			Clientes eventuais (vendas, não vinculado aos contratos)
+customer_return			Devoluções de clientes
+customer_return_item			Itens devolvidos por clientes
+death_event			Eventos de óbito (vinculados ao plano)
+department			Departamentos da empresa
+document			Documentos (números, identificação, linkados ao sys_user)
+document_type			Tipos de documento (tipos aceitos: CPF, RG, CNH, Passaporte) 
+driver			Motoristas (??? substituir por Partner ???)
+driver_document			Documentos de motoristas (??? entity_document -> document ???)
+driver_status			Status de motoristas (??? general status???)
+entity_address			Associação entre entidades e endereços (contratos, pessoas ou empresas)
+entity_document			Associação entre entidades e documentos (contratos, pessoas ou empresas)
+entity_sys_user			Associação entre entidades e usuários do sistema (titulares, parceiros) 
+equipament_rental			Locação de equipamentos
+expense_type			Tipos de despesa
+financial_ratio			Índices financeiros (indicadores)
+financial_ratio_value			Valores calculados de índices financeiros
+fiscal_period			Períodos fiscais
+fiscal_year			Anos fiscais
+gender			Gêneros (masculino, feminino, ignorado)
+general_status			"Status genéricos (ativo, suspenso, inativo, cancelado, etc.) (??? mudar table name to ""status""???)"
+goods_receipt			Recebimento de mercadorias
+goods_receipt_item			Itens do recebimento de mercadorias
+group_batch			Lotes de grupos (agrupamentos)
+group_class			Classes de grupos (categoria padrão do grupo ???categorias limitadas aos contratos???)
+integration_mapping			Mapeamentos para integração com outros sistemas (???)
+integration_setting			Configurações de integração (???)
+integration_sync_log			Log de sincronização de integrações (???)
+inventory_adjustment			Ajustes de inventário
+inventory_adjustment_item			Itens do ajuste de inventário
+journal			Diário contábil (lançamentos)
+journal_attachment			Anexos de lançamentos contábeis
+journal_line			Linhas do diário contábil
+journal_type			Tipos de diário (ex: vendas, compras)
+log_event_type			Tipos de eventos para log (???)
+maintenance			Manutenções (de veículos)
+maintenance_document			Documentos de manutenção
+maintenance_status			Status de manutenção
+medical_foward			Guias de encaminhamento (médico ou para parceiros)
+membership_card			Cartões de associado ou plano
+ordpgrc			"Controle de Caixa (abreviatura de ""ordem de pagamento/recebimento""?"
+partner			Parceiros (pessoas jurídicas ou físicas com vínculo)
+partner_bank_account			Contas bancárias de parceiros
+partner_type			Tipos de parceiro (vendedor, cobrador, funcionário, motorista, agente funerário, etc.) 
+payment_method			Métodos de pagamento
+payment_plan			Planos de pagamento (parcelamentos)
+payment_plan_installment			Parcelas de um plano de pagamento
+payment_receipt			Comprovantes de pagamento/recebimento
+payment_status			Status de pagamento
+payment_transaction			Transações de pagamento (cartão, boleto, etc.)
+performed_service			Serviços prestados (???)
+product			Produtos
+product_category			Categorias de produtos
+product_image			Imagens de produtos
+product_pricing			Preços de produtos
+product_supplier			Fornecedores de produtos
+product_variation			Variações de produtos (tamanho, cor, etc.)
+project			Projetos (identificação fluxo financeiro)
+prorated_service			Serviços rateados (cobrados na circular)
+purchase_order			Pedidos de compra
+purchase_order_item			Itens do pedido de compra
+purchase_requisition			Requisições de compra
+purchase_requisition_item			Itens da requisição de compra
+reconciliation_item			Itens de conciliação (bancária ou contábil) (???)
+region			Regiões de cobrança
+report_definition			Definições de relatórios
+request_for_quotation			Solicitações de cotação (RFQ / Orçamento)
+rfq_item			Itens de uma solicitação de cotação
+rfq_supplier			Fornecedores participantes de uma cotação
+sales_allocation			Alocação de vendas (rateio)(???)
+sales_order			Pedidos de venda
+sales_order_item			Itens do pedido de venda
+schema_version			Versão do esquema de banco de dados (controle de migrações)
+serial_tracking			Rastreamento de números de série
+service_funeral			Serviços funerários
+service_type			Tipos de serviço
+shipment			Remessas (expedição)
+shipment_item			Itens de remessa
+specialty			Especialidades (médicas, por exemplo)
+state			Estados (UF)
+state_machine_transitions			Transições de máquina de estados (workflow: venda, pós-venda, ativo, suspenso, cancelado,...)
+status_possible			Possíveis status para entidades (??? subsituir por state_machine_transitions???)
+status_reason			Motivos para status (ex: motivo de cancelamento)
+stock_count			Contagens de estoque (inventário físico)
+stock_count_item			Itens da contagem de estoque
+stock_level			Níveis de estoque (saldo atual)
+stock_movement			Movimentações de estoque (entrada/saída)
+stock_movement_type			Tipos de movimentação de estoque
+stock_reservation			Reservas de estoque
+storage_location			Localizações de armazenagem
+subsidiary			Filiais ou subsidiárias
+supplier			Fornecedores (???substituir por partner + partner_type=Fornecedor????)
+supplier_quotation			Cotações de fornecedores
+supplier_quotation_item			Itens da cotação de fornecedor
+supplier_return			Devoluções a fornecedores
+supplier_return_item			Itens devolvidos a fornecedores
+sys_audit_log			Log de auditoria do sistema
+sys_group			Grupos de usuários
+sys_group_program			Programas (permissões) associados a grupos
+sys_preference			Preferências do sistema (configurações)
+sys_program			Programas/módulos do sistema
+sys_setting			Configurações gerais do sistema
+sys_unit			Unidades organizacionais (empresas, filiais)
+sys_user			Usuários do sistema
+sys_user_group			Associação de usuários a grupos
+sys_user_program			Permissões específicas de usuários para programas
+sys_user_unit			Associação de usuários a unidades
+tax_code			Códigos de tributação (??? impostos ???)
+transaction			Transações financeiras (lançamentos)
+transaction_allocation			Alocação de transações (rateio)
+transaction_type			Tipos de transação (recebimento, pagamento, transferencia, etc.)
+trip			Viagens (fretes, deslocamentos)
+trip_document			Documentos de viagem
+trip_status			Status de viagem
+units_of_measurement			Unidades de medida
+user_company_access			Acesso de usuários a empresas (???)
+validation_rule			Regras de validação (???)
+variation_attribute			Atributos de variação de produto
+vehicle			Veículos
+vehicle_daily_log			Diário de bordo de veículos
+vehicle_document			Documentos de veículos
+vehicle_expense			Despesas com veículos
+vehicle_expense_status			Status de despesas de veículos
+vehicle_request			Solicitações de veículos
+vehicle_request_status			Status de solicitação de veículos
+vehicle_request_type			Tipos de solicitação de veículos
+vehicle_status			Status de veículos
+vehicle_type			Tipos de veículos
+warehouse			Armazéns
+warehouse_transfer			Transferências entre armazéns
+warehouse_transfer_item			Itens de transferência entre armazéns

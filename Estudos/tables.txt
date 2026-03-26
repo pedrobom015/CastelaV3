@@ -1,0 +1,470 @@
+document, v1 
+entity_document, v1
+address, v1 
+entity_address, v1
+subsidiary, v1 
+address_type, v1 
+cidade, v1 
+estado, v1 
+cep_cache, v1 
+document_type, v1 
+gender, v1 
+api_error, v1 
+audit_log, v1 
+schema_version, v1
+sys_group, v1 
+sys_group_program, v1 
+sys_preference, v1 
+sys_program, v1 
+sys_unit, v1 
+sys_user_group, v1 
+sys_user_program, v1 
+sys_user, v1 
+sys_user_unit, v1 
+user_company_access, v1
+entity_sys_user, v1
+partner_type, v1
+partner, v1
+partner_bank_account, v1
+company, v1
+general_status, v1 
+billing_rates, v1
+account_type, v1
+account, v1
+currency, v1
+contract, v1 
+beneficiary, v1 
+contract_charge, v1 
+bank_slip, v1 
+contract_addendum, v1 
+contract_status, v1 
+contract_status_history, v1 
+payment_receipt, v1 
+medical_foward, v1 
+ordpgrc, v1 
+service_funeral, v1 
+carteirinha, v1 
+equipament_rental, v1 
+batch_chk, v1 
+batch_detail, v1 
+performed_service, v1 
+group_batch, v1 
+charge, v1 
+prorated_service, v1
+classe, v1 
+service_type, v1 
+specialty, v1 
+status_possible, v1 
+status_reason, v1 
+death_event, v1
+payment_status, v1 
+contract_active, v1 
+group_class, v1 
+addendum, v1 
+age_addendum, v1 
+billing_cycle, v1
+contract_billing, v1
+payment_plan, v1
+payment_plan_installment, v1
+payment_transaction, v1
+billing_rule, v1
+billing_rule_application, v1
+account_type, v1
+account, v1
+bank_account, v1
+fiscal_year, v1
+fiscal_period, v1
+cost_center, v1
+department, v1
+project, v1
+accounting_code, v1
+tax_code, v1
+contact_type, v1
+contact, v1
+contact_bank_account, v1
+journal_type, v1
+journal, v1
+journal_line, v1
+journal_attachment, v1
+payment_method, v1
+transaction_type, v1
+transaction, v1
+transaction_allocation, v1
+bank_reconciliation, v1
+reconciliation_item, v1
+budget, v1
+budget_item, v1
+budget_period, v1
+report_definition, v1
+account_daily_balance, v1
+account_period_balance, v1
+financial_ratio, v1
+financial_ratio_value, v1
+integration_setting, v1
+integration_mapping, v1
+integration_sync_log, v1
+sys_setting, v1
+sys_audit_log, v1
+validation_rule, v1
+warehouse, v1
+storage_location, v1
+product_category, v1
+brand, v1
+units_of_measurement, v1
+product, v1
+attribute_type, v1
+attribute_value, v1
+product_variation, v1
+variation_attribute, v1
+product_pricing, v1
+product_image, v1
+supplier, v1
+product_supplier, v1
+stock_level, v1
+stock_movement_type, v1
+stock_movement, v1
+stock_count, v1
+stock_count_item, v1
+stock_reservation , v1, v1
+batch_tracking, v1
+serial_tracking, v1
+purchase_requisition, v1
+purchase_requisition_item, v1
+request_for_quotation, v1
+rfq_item, v1
+rfq_supplier, v1
+supplier_quotation, v1
+supplier_quotation_item, v1
+purchase_order, v1
+purchase_order_item, v1
+goods_receipt, v1
+goods_receipt_item, v1
+supplier_return, v1
+supplier_return_item, v1
+customer, v1
+sales_order, v1
+sales_order_item, v1
+sales_allocation, v1
+shipment, v1
+shipment_item, v1
+customer_return, v1
+customer_return_item , v1, v1
+warehouse_transfer , v1, v1
+warehouse_transfer_item, v1
+inventory_adjustment , v1, v1
+inventory_adjustment_item, v1
+sys_program, v1 
+sys_group, v1
+sys_group_program, v1
+sys_preference, v1
+sys_unit, v1
+sys_user, v1
+sys_user_group, v1
+sys_user_program, v1
+sys_user_unit, v1
+audit_log, v1
+vehicle_status, v1
+vehicle_type, v1
+driver_status, v1
+service_type, v1 
+maintenance_status, v1
+vehicle_request_type, v1
+vehicle_request_status, v1
+trip_status, v1
+expense_type, v1
+vehicle_expense_status, v1
+vehicle, v1
+driver, v1
+maintenance, v1
+vehicle_request, v1
+trip, v1
+vehicle_expense, v1
+vehicle_document, v1
+driver_document, v1
+maintenance_document, v1
+trip_document, v1
+log_event_type, v1
+vehicle_daily_log, v1
+schema_version, v4
+gender, v4 
+document_type, v4 
+address_type, v4 
+payment_status, v4 
+state, v4 
+city, v4 
+currency, v4
+general_status, v4 
+contract_status, v4 
+state_machine_transitions, v4 
+status_reason, v4 
+sys_group, v4 
+sys_program, v4 
+sys_group_program, v4 
+sys_preference, v4 
+subsidiary, v4 
+sys_unit, v4 
+sys_user, v4 
+sys_user_group, v4 
+sys_user_program, v4 
+sys_user_unit, v4 
+address, v4 
+entity_address, v4
+document, v4 
+entity_document, v4
+company, v4
+user_company_access, v4
+entity_sys_user, v4
+partner_type, v4
+account_type, v4
+region, v4
+specialty, v4 
+partner, v4
+partner_bank_account, v4
+category, v4 
+group_batch, v4 
+group_class, v4 
+contract, v4 
+contract_version, v4
+contract_covers, v4
+contract_config_billing, v4
+contract_events, v4
+contract_status_history, v4 
+contract_active, v4 
+beneficiary, v4
+service_type, v4 
+performed_service, v4 
+service_funeral, v4 
+death_event, v4
+membership_card, v4 
+equipament_rental, v4 
+addendum, v4 
+age_addendum, v4 
+contract_addendum, v4 
+contract_charge, v4
+charge, v4 
+prorated_service, v4
+bank_slip, v4 
+ordpgrc, v4 
+payment_receipt, v4 
+batch_chk, v4 
+batch_detail, v4 
+billing_cycle, v4
+contract_billing, v4
+payment_plan, v4
+payment_plan_installment, v4
+payment_transaction, v4
+billing_rule, v4
+billing_rule_application, v4
+medical_foward, v4 
+account, v4
+cep_cache, v4 
+api_error, v4 
+audit_log, v4 
+schema_version  - Versionamento da base de dados
+gender, v0 ( tabelas - gerais - Gêneros) 
+document_type, v0 ( tabelas - auxiliares - Tipos de Documento)
+address_type, v0 ( tabelas - auxiliares - Tipos de Endereço)
+payment_status, v0 ( 
+estado, v0 ( tabelas - gerais - Estados)
+cidade, v0 ( tabelas - gerais - Cidades) 
+currency, v0 (tabelas - gerais - Moedas) 
+general_status 
+sys_group, v0 ( 
+sys_group_program, v0 ( 
+sys_preference, v0 ( 
+sys_program, v0 ( 
+sys_unit, v0 ( 
+sys_user_group, v0 ( 
+sys_user_program, v0 ( 
+sys_user, v0 ( 
+address, v0 (tabelas - Endereços) 
+entity_address, v0 (tabelas - auxiliares - Vinculos de Endereço)
+company, v0 (tabelas - gerais - Empresas)
+sys_user_unit, v0 ( 
+user_company_access, v0 (
+entity_sys_user, v0 (
+subsidiary, v0 ( tabelas - gerais - Filiais)
+partner_type, v0 (tabelas - auxiliares - Tipos de Parceiro)
+account_type, v0 (Financeiro - tabelas???)
+classe, v0 ( 
+group_batch, v0 (Contratos - tabelas - Grupos)
+document, v0 (tabelas - Documentos) 
+entity_document, v0 (tabelas - auxiliares - Vinculos de Documento) 
+partner, v0 (tabelas - Parceiros)
+contract, v0 (Contratos - Lançamentos)
+performed_service, v0 ( 
+service_funeral, v0 (Atendimento - 
+beneficiary, v0 (Contratos - Lançamentos)
+contract_charge, v0 (Contratos - Lançamentos)
+addendum, v0 ( 
+contract_addendum, v0 (Contratos - Lançamentos)
+account, v0 (Financeiro - tabelas???) 
+partner, v0 (tabelas - Parceiros)
+account_type, v0 (
+account, v0 (
+
+
+
+
+
+
+partner_bank_account, v0 (Financeiro - 
+billing_rates, v0 (
+bank_slip, v0 (Contratos - Tabelas???)
+contract_status, v0 ( 
+contract_status_history, v0 ( 
+payment_receipt, v0 (Atendimento - Lançamentos)
+medical_foward, v0 (Atendimento - Lançamentos)
+ordpgrc, v0 (Tabelas - Gerais - Caixas)
+carteirinha, v0 ( 
+equipament_rental, v0 ( 
+batch_chk, v0 ( 
+batch_detail, v0 ( 
+-- TABLES, v0 (MAIN ADM TABLES)  
+
+charge, v0 (Contratos - tabelas - circulares) 
+prorated_service, v0 (Contratos - tabelas - Serviços Executados)
+-- TABLES, v0 (GENERAL TABLES)  
+service_type, v0 ( 
+specialty, v0 (Tabelas - Gerais - Especialides)
+status_possible, v0 ( 
+status_reason, v0 ( 
+death_event, v0 (
+contract_active, v0 ( 
+group_class, v0 ( 
+age_addendum, v0 ( 
+billing_cycle, v0 (
+contract_billing, v0 (
+payment_plan, v0 (
+payment_plan_installment, v0 (
+payment_transaction, v0 (
+billing_rule, v0 (
+billing_rule_application, v0 (
+cep_cache, v0 ( 
+api_error, v0 ( 
+audit_log, v0 ( 
+
+-- CORE TABLES, v0 (with improvements)
+warehouse, v0 (
+storage_location, v0 (
+product_category, v0 (
+brand, v0 (
+units_of_measurement, v0 (
+product, v0 (
+attribute_type, v0 (
+attribute_value, v0 (
+product_variation, v0 (
+variation_attribute, v0 (
+product_pricing, v0 (
+product_image, v0 (
+supplier, v0 (
+product_supplier, v0 (
+stock_level, v0 (
+stock_movement_type, v0 (
+stock_movement, v0 (
+stock_count, v0 (
+stock_count_item, v0 (
+stock_reservation , v0 (
+batch_tracking, v0 (
+serial_tracking, v0 (
+purchase_requisition, v0 (
+purchase_requisition_item, v0 (
+request_for_quotation, v0 (
+rfq_item, v0 (
+rfq_supplier, v0 (
+supplier_quotation, v0 (
+supplier_quotation_item, v0 (
+purchase_order, v0 (
+purchase_order_item, v0 (
+goods_receipt, v0 (
+goods_receipt_item, v0 (
+supplier_return, v0 (
+supplier_return_item, v0 (
+customer, v0 (
+sales_order, v0 (
+sales_order_item, v0 (
+sales_allocation, v0 (
+shipment, v0 (
+shipment_item, v0 (
+customer_return, v0 (
+customer_return_item , v0 (
+warehouse_transfer , v0 (
+warehouse_transfer_item, v0 (
+inventory_adjustment , v0 (
+inventory_adjustment_item, v0 (
+sys_program, v0 ( -- Moved sys_program before sys_group_program
+sys_group, v0 (
+sys_group_program, v0 (
+sys_preference, v0 (
+sys_unit, v0 (
+sys_user, v0 (
+sys_user_group, v0 (
+sys_user_program, v0 (
+sys_user_unit, v0 (
+audit_log, v0 (
+-- AUDIT LOG ARCHIVE TABLE, v0 (Added)
+audit_log_archive LIKE audit_log;
+-- PARTITIONING FOR LARGE TABLES, v0 (
+ALTER TABLE stock_movement PARTITION BY RANGE, v0 (YEAR, v0 (movement_date)), v0 (
+    OPTIMIZE TABLE stock_movement, stock_level, audit_log;
+    -- Ensure audit_log_archive table is created, e.g., audit_log_archive LIKE audit_log;
+
+
+bank_account, v0 (
+fiscal_year, v0 (
+fiscal_period, v0 (
+cost_center, v0 (
+department, v0 (
+project, v0 (
+accounting_code, v0 (
+tax_code, v0 (
+contact_type, v0 (
+contact, v0 (
+contact_bank_account, v0 (
+journal_type, v0 (
+journal, v0 (
+journal_line, v0 (
+journal_attachment, v0 (
+payment_method, v0 (
+transaction_type, v0 (
+transaction, v0 (
+transaction_allocation, v0 (
+bank_reconciliation, v0 (
+reconciliation_item, v0 (
+budget, v0 (
+budget_item, v0 (
+budget_period, v0 (
+report_definition, v0 (
+account_daily_balance, v0 (
+account_period_balance, v0 (
+financial_ratio, v0 (
+financial_ratio_value, v0 (
+-- INTEGRATION TABLES, v0 (FOR ERP)
+integration_setting, v0 (
+integration_mapping, v0 (
+integration_sync_log, v0 (
+sys_setting, v0 (
+sys_audit_log, v0 (
+validation_rule, v0 (
+vehicle_status, v0 (
+vehicle_type, v0 (
+driver_status, v0 (
+service_type, v0 ( -- for maintenance
+maintenance_status, v0 (
+vehicle_request_type, v0 (
+vehicle_request_status, v0 (
+trip_status, v0 (
+expense_type, v0 (
+vehicle_expense_status, v0 (
+vehicle, v0 (
+driver, v0 (
+maintenance, v0 (
+vehicle_request, v0 (
+trip, v0 (
+vehicle_expense, v0 (
+vehicle_document, v0 (
+driver_document, v0 (
+maintenance_document, v0 (
+trip_document, v0 (
+log_event_type, v0 (
+vehicle_daily_log, v0 (

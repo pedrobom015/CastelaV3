@@ -1,0 +1,234 @@
+-- -----------------------------------------------------------------------------
+-- PARTE 7: CONTRATOS E VERSIONAMENTO
+-- Estrutura de versionamento:
+-- - contract: Dados permanentes do contrato (identidade)
+-- - contract_version: Vers?es do contrato (dados que mudam)
+-- - Tabelas dependentes referenciam contract_version_id
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS contract( 
+    contract_id INT UNSIGNED AUTO_INCREMENT NOT NULL,
+    sys_unit_id INT UNSIGNED NOT NULL,
+    sys_user_id INT UNSIGNED NOT NULL,
+    owner_id INT UNSIGNED NOT NULL,
+    partner_id INT UNSIGNED,
+    indicated_by INT UNSIGNED,
+    contract_name VARCHAR(100) NOT NULL,
+    login VARCHAR(200) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    contract_number VARCHAR(20) NOT NULL,
+    original_contract_number VARCHAR(100),
+    current_status VARCHAR(50) DEFAULT 'active' COMMENT 'Status: active, canceled, redeemed, transferred',
+    status_id INT UNSIGNED,
+    seller_id INT UNSIGNED,
+    total_value DECIMAL(10,2),
+    installment_value DECIMAL(10,2),
+    obs TEXT,
+    services_amount INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    created_by INT UNSIGNED,
+    updated_by INT UNSIGNED,
+    deleted_by INT UNSIGNED,
+    PRIMARY KEY (contract_id),
+    UNIQUE KEY uk_contract_number (contract_number),
+    INDEX idx_contract_unit (sys_unit_id),
+    INDEX idx_contract_user (sys_user_id),
+    INDEX idx_contract_owner (owner_id),
+    INDEX idx_contract_partner (partner_id),
+    INDEX idx_contract_status (current_status),
+    INDEX idx_contract_seller (seller_id),
+    INDEX idx_contract_seller_date (seller_id, created_at),
+    INDEX idx_contract_indicated (indicated_by),
+    CONSTRAINT fk_contract_unit FOREIGN KEY (sys_unit_id) REFERENCES sys_unit(sys_unit_id),
+    CONSTRAINT fk_contract_users FOREIGN KEY (sys_user_id) REFERENCES sys_user(sys_user_id),
+    CONSTRAINT fk_contract_owner FOREIGN KEY (owner_id) REFERENCES sys_user(sys_user_id),
+    CONSTRAINT fk_contract_partner FOREIGN KEY (partner_id) REFERENCES partner(partner_id),
+    CONSTRAINT fk_contract_indicated FOREIGN KEY (indicated_by) REFERENCES sys_user(sys_user_id),
+    CONSTRAINT fk_contract_status FOREIGN KEY (status_id) REFERENCES contract_status(contract_status_id),
+    CONSTRAINT fk_contract_seller FOREIGN KEY (seller_id) REFERENCES partner(partner_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+ COMMENT='Tabela principal de contratos - identidade e titular';
+
+CREATE TABLE IF NOT EXISTS contract_version (
+    contract_version_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    contract_id INT UNSIGNED NOT NULL COMMENT 'Contrato pai',
+    group_batch_id INT UNSIGNED NOT NULL COMMENT 'Grupo/Lote desta vers?o',
+    version_number INT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'N£mero sequencial da vers?o',
+    valid_from DATE NOT NULL COMMENT 'Data de in¡cio da validade',
+    valid_to DATE NULL COMMENT 'Data de t‚rmino (NULL = vers?o atual)',
+    is_current TINYINT DEFAULT 1 COMMENT 'Indica se ‚ a vers?o ativa',
+    class_id INT UNSIGNED,
+    collector_id INT UNSIGNED,
+    region_id INT UNSIGNED,
+    change_reason VARCHAR(255) COMMENT 'Motivo da altera‡?o',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    created_by INT UNSIGNED,
+    updated_by INT UNSIGNED,
+    deleted_by INT UNSIGNED,
+    INDEX idx_contract_version_contract (contract_id),
+    INDEX idx_contract_version_group (group_batch_id),
+    INDEX idx_contract_version_current (is_current),
+    INDEX idx_contract_version_class (class_id),
+    INDEX idx_contract_version_collector (collector_id),
+    INDEX idx_contract_region (region_id),
+    INDEX idx_contract_version_valid (valid_from, valid_to),
+    UNIQUE KEY uk_contract_version (contract_id, version_number),
+    CONSTRAINT fk_contract_version_contract FOREIGN KEY (contract_id) REFERENCES contract(contract_id) ,
+    CONSTRAINT fk_contract_version_group FOREIGN KEY (group_batch_id) REFERENCES group_batch(group_batch_id),
+    CONSTRAINT fk_contract_version_class FOREIGN KEY (class_id) REFERENCES category(category_id),
+    CONSTRAINT fk_contract_version_collector FOREIGN KEY (collector_id) REFERENCES partner(partner_id),
+    CONSTRAINT fk_contract_version_region FOREIGN KEY (region_id) REFERENCES region(region_id),
+    CONSTRAINT fk_contract_version_created_by FOREIGN KEY (created_by) REFERENCES sys_user(sys_user_id),
+    CONSTRAINT fk_contract_version_updated_by FOREIGN KEY (updated_by) REFERENCES sys_user(sys_user_id),
+    CONSTRAINT fk_contract_version_deleted_by FOREIGN KEY (deleted_by) REFERENCES sys_user(sys_user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+ COMMENT='Vers?es do contrato - hist¢rico de altera‡?es';
+
+ALTER TABLE contract 
+    ADD COLUMN current_version_id INT UNSIGNED AFTER contract_id,
+    ADD CONSTRAINT fk_contract_current_version FOREIGN KEY (current_version_id) REFERENCES contract_version(contract_version_id);
+
+-- Tabela de coberturas do contrato (renomeada de contract_services)
+CREATE TABLE IF NOT EXISTS contract_covers (
+    contract_covers_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    contract_version_id INT UNSIGNED NOT NULL COMMENT 'FK para contract_version',
+    group_batch_id INT UNSIGNED NOT NULL,
+    class_id INT UNSIGNED NOT NULL,
+    status_id INT UNSIGNED NOT NULL,
+    contract_type VARCHAR(50) NOT NULL COMMENT 'Tipo do contrato',
+    industry VARCHAR(50) DEFAULT 'FUNERAL' COMMENT 'Ind£stria/Segmento',
+    start_date DATETIME NOT NULL COMMENT 'Data de in¡cio',
+    end_date DATETIME NULL COMMENT 'Data de t‚rmino',
+    admission DATETIME NOT NULL COMMENT 'Data de admiss?o',
+    final_grace DATETIME NULL COMMENT 'Carˆncia final',
+    grace_period_days VARCHAR(50) COMMENT 'Dias de carˆncia',
+    renew_at DATETIME NULL COMMENT 'Data de renova‡?o',
+    services_amount INT COMMENT 'Quantidade de servi‡os',
+    service_option1 VARCHAR(100),
+    service_option2 VARCHAR(100),
+    alives INT COMMENT 'Vivos',
+    deceaseds INT COMMENT 'Falecidos',
+    dependents INT COMMENT 'Dependentes',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,
+    created_by INT UNSIGNED,
+    updated_by INT UNSIGNED,
+    deleted_by INT UNSIGNED,
+    INDEX idx_contract_covers_version (contract_version_id),
+    INDEX idx_contract_covers_type (contract_type),
+    INDEX idx_contract_covers_start (start_date),
+    INDEX idx_contract_covers_group (group_batch_id),
+    CONSTRAINT fk_contract_covers_version FOREIGN KEY (contract_version_id) REFERENCES contract_version(contract_version_id),
+    CONSTRAINT fk_contract_covers_group FOREIGN KEY (group_batch_id) REFERENCES group_batch(group_batch_id),
+    CONSTRAINT fk_contract_covers_class FOREIGN KEY (class_id) REFERENCES category(category_id),
+    CONSTRAINT fk_contract_covers_status FOREIGN KEY (status_id) REFERENCES status(status_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+ COMMENT='Coberturas do contrato - detalhes do ciclo de vida';
+
+-- Tabela de configura‡?o de cobran‡a (renomeada de contract_billing_config)
+CREATE TABLE IF NOT EXISTS contract_config_billing (
+    contract_config_billing_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    contract_version_id INT UNSIGNED NOT NULL COMMENT 'FK para contract_version',
+    seller_id INT UNSIGNED COMMENT 'Vendedor',
+    collector_id INT UNSIGNED COMMENT 'Cobrador',
+    region_id INT UNSIGNED COMMENT 'Regi?o',
+    billing_frequency INT DEFAULT 1 NOT NULL COMMENT '1=Mensal, 3=Trimestral, 6=Semestral, 12=Anual',
+    month_initial_billing CHAR(2) NOT NULL COMMENT 'Mˆs inicial (01-12)',
+    year_initial_billing CHAR(4) NOT NULL COMMENT 'Ano inicial (YYYY)',
+    opt_payday INT COMMENT 'Dia de vencimento preferencial',
+    first_charge INT COMMENT 'Primeira cobran‡a',
+    last_charge INT COMMENT '?ltima cobran‡a',
+    charges_amount INT COMMENT 'Total de cobran‡as',
+    charges_paid INT COMMENT 'Cobran‡as pagas',
+    late_fee_percentage DECIMAL(8,5) COMMENT 'Percentual de multa',
+    is_partial_payments_allowed TINYINT DEFAULT 0 COMMENT 'Permite pagamento parcial',
+    default_plan_installments VARCHAR(50) COMMENT 'Parcelas padr?o do plano',
+    default_plan_frequency VARCHAR(20) DEFAULT 'MONTHLY' COMMENT 'Frequˆncia do plano',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,
+    created_by INT UNSIGNED,
+    updated_by INT UNSIGNED,
+    deleted_by INT UNSIGNED,
+    INDEX idx_contract_config_billing_version (contract_version_id),
+    INDEX idx_contract_config_billing_seller (seller_id),
+    INDEX idx_contract_config_billing_collector (collector_id),
+    INDEX idx_contract_config_billing_region (region_id),
+    CONSTRAINT fk_contract_config_billing_version FOREIGN KEY (contract_version_id) REFERENCES contract_version(contract_version_id),
+    CONSTRAINT fk_contract_config_billing_seller FOREIGN KEY (seller_id) REFERENCES sys_user(sys_user_id),
+    CONSTRAINT fk_contract_config_billing_collector FOREIGN KEY (collector_id) REFERENCES sys_user(sys_user_id),
+    CONSTRAINT fk_contract_config_billing_region FOREIGN KEY (region_id) REFERENCES region(region_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+ COMMENT='Configura‡?o de cobran‡a e comercial';
+
+CREATE TABLE IF NOT EXISTS contract_events (
+    contract_events_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    contract_version_id INT UNSIGNED,
+    event_type VARCHAR(50) NOT NULL COMMENT 'CRIACAO, ADITIVO, CANCELAMENTO, ATENDIMENTO',
+    event_date TIMESTAMP NOT NULL,
+    payload JSON COMMENT 'Dados adicionais do evento',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    created_by INT UNSIGNED,
+    updated_by INT UNSIGNED,
+    deleted_by INT UNSIGNED,
+    INDEX idx_contract_events_version (contract_version_id),
+    INDEX idx_contract_events_type (event_type),
+    INDEX idx_contract_events_date (event_date),
+    CONSTRAINT fk_contract_events_version FOREIGN KEY (contract_version_id) REFERENCES contract_version(contract_version_id),
+    CONSTRAINT fk_contract_events_created_by FOREIGN KEY (created_by) REFERENCES sys_user(sys_user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+ COMMENT='Hist¢rico de eventos do contrato';
+
+CREATE TABLE IF NOT EXISTS contract_status_history( 
+    contract_status_history_id INT UNSIGNED AUTO_INCREMENT NOT NULL,
+    state_machine_transition_id INT UNSIGNED NOT NULL,
+    status_reason_id INT UNSIGNED NOT NULL,
+    contract_version_id INT UNSIGNED NOT NULL,
+    contract_number VARCHAR(20) NOT NULL,
+    detail_status VARCHAR(250),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    created_by INT UNSIGNED,
+    updated_by INT UNSIGNED,
+    deleted_by INT UNSIGNED,
+    PRIMARY KEY (contract_status_history_id),
+    INDEX idx_contract_status_history_version (contract_version_id),
+    INDEX idx_contract_status_history_transition (state_machine_transition_id),
+    INDEX idx_contract_status_history_reason (status_reason_id),
+    CONSTRAINT fk_contract_status_history_transition FOREIGN KEY (state_machine_transition_id) REFERENCES state_machine_transitions(state_machine_transitions_id),
+    CONSTRAINT fk_contract_status_history_statreason FOREIGN KEY (status_reason_id) REFERENCES status_reason(status_reason_id),
+    CONSTRAINT fk_contract_status_history_contract FOREIGN KEY (contract_version_id) REFERENCES contract_version(contract_version_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS contract_active( 
+    contract_active_id INT UNSIGNED AUTO_INCREMENT NOT NULL,
+    sys_unit_id INT UNSIGNED NOT NULL,
+    sys_user_id INT UNSIGNED NOT NULL,
+    contract_number VARCHAR(20) NOT NULL,
+    contract_version_id INT UNSIGNED NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    created_by INT UNSIGNED,
+    updated_by INT UNSIGNED,
+    deleted_by INT UNSIGNED,
+    PRIMARY KEY (contract_active_id),
+    UNIQUE KEY uk_contract_active_number (contract_number),
+    INDEX idx_contract_active_unit (sys_unit_id),
+    INDEX idx_contract_active_user (sys_user_id),
+    INDEX idx_contract_active_version (contract_version_id),
+    CONSTRAINT fk_contract_active_unit FOREIGN KEY (sys_unit_id) REFERENCES sys_unit(sys_unit_id),
+    CONSTRAINT fk_contract_active_user FOREIGN KEY (sys_user_id) REFERENCES sys_user(sys_user_id),
+    CONSTRAINT fk_contract_number_unique_contract FOREIGN KEY (contract_version_id) REFERENCES contract_version(contract_version_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
