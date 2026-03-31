@@ -25,7 +25,7 @@ function emptyRec(): ProcessoRec {
 const COLUMNS: Column[] = [
   { key: 'processo', label: 'Processo', width: '100px' },
   { key: 'categ', label: 'Categ.', width: '60px', align: 'center' },
-  { key: 'num', label: 'Número', width: '80px' },
+  { key: 'num', label: 'Contrato', width: '100px' },
   { key: 'seg', label: 'Segurado', width: '200px' },
   { key: 'fal', label: 'Falecido', width: '200px' },
   { key: 'dfal', label: 'Dt. Falec.', width: '100px', render: (v) => formatDate(v as Date) },
@@ -128,7 +128,7 @@ export function Processos() {
             <Btn variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Btn>
             <Btn onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</Btn>
             {editing && (
-              {/* <Btn variant="danger" onClick={() => { setModalOpen(false); setConfirmDelete(editing) }}>Excluir</Btn> */}
+              <Btn variant="danger" onClick={() => { setModalOpen(false); setConfirmDelete(editing) }}>Excluir</Btn>
             )}
           </>
         }

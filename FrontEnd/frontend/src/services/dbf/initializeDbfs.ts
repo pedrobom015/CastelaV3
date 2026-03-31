@@ -206,10 +206,10 @@ export const DBF_STRUCTURES: Record<string, DbfField[]> = {
 		{ name: "mensag2", type: "C", length: 30, decimals: 0 },
 	],
 	ARQGRUP: [
-		{ name: "grup", type: "C", length: 2, decimals: 0 },
+		{ name: "grup", type: "C", length: 4, decimals: 0 },
 		{ name: "classe", type: "C", length: 2, decimals: 0 },
-		{ name: "inicio", type: "C", length: 6, decimals: 0 },
-		{ name: "final", type: "C", length: 6, decimals: 0 },
+		{ name: "inicio", type: "C", length: 9, decimals: 0 },
+		{ name: "final", type: "C", length: 9, decimals: 0 },
 		{ name: "acumproc", type: "N", length: 2, decimals: 0 },
 		{ name: "maxproc", type: "N", length: 2, decimals: 0 },
 		{ name: "cpadmiss", type: "C", length: 1, decimals: 0 },
@@ -242,7 +242,7 @@ export const DBF_STRUCTURES: Record<string, DbfField[]> = {
 		{ name: "superv", type: "C", length: 3, decimals: 0 },
 	],
 	CIRCULAR: [
-		{ name: "grupo", type: "C", length: 2, decimals: 0 },
+		{ name: "grupo", type: "C", length: 4, decimals: 0 },
 		{ name: "circ", type: "C", length: 3, decimals: 0 },
 		{ name: "procpend", type: "N", length: 2, decimals: 0 },
 		{ name: "emissao_", type: "D", length: 8, decimals: 0 },
@@ -546,6 +546,20 @@ export const DBF_STRUCTURES: Record<string, DbfField[]> = {
 		{ name: "idxd", type: "C", length: 20, decimals: 0 },
 		{ name: "idxm", type: "C", length: 20, decimals: 0 },
 		{ name: "flag_excl", type: "C", length: 1, decimals: 0 },
+	],
+	ADENCOB: [
+		{ name: "seq",         type: "C", length: 6,  decimals: 0 },
+		{ name: "codigo",      type: "C", length: 9,  decimals: 0 },
+		{ name: "codproduto",  type: "C", length: 4,  decimals: 0 },
+		{ name: "valor",       type: "N", length: 10, decimals: 2 },
+		{ name: "nparcelas",   type: "N", length: 2,  decimals: 0 },
+		{ name: "permanente",  type: "C", length: 1,  decimals: 0 },
+		{ name: "tipcob",      type: "C", length: 1,  decimals: 0 },
+		{ name: "formapgto",   type: "C", length: 2,  decimals: 0 },
+		{ name: "datainicio_", type: "D", length: 8,  decimals: 0 },
+		{ name: "em_",         type: "D", length: 8,  decimals: 0 },
+		{ name: "por",         type: "C", length: 10, decimals: 0 },
+		{ name: "flag_excl",   type: "C", length: 1,  decimals: 0 },
 	],
 };
 

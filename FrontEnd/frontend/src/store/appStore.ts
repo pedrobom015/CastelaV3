@@ -3,6 +3,8 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { get as idbGet, set as idbSet, del } from "idb-keyval";
 import type { DbfTable } from "../services/dbf/DbfReader";
 
+const IS_DEMO = import.meta.env.VITE_MODE_DEMO === 'true'
+
 // Chave IDB separada para o FileSystemDirectoryHandle (não passa por JSON)
 const DIR_HANDLE_IDB_KEY = 'adp-dir-handle-native'
 
@@ -114,17 +116,20 @@ export const useAppStore = create<AppState>()(
 		}),
 		{
 			name: "adp-storage",
-			storage: createJSONStorage(() => idbStorage),
+			// Em modo demo os dados vêm sempre do backend — usa sessionStorage apenas para
+			// usuario/nivelop e nunca persiste tables. No modo local usa IDB completo.
+			storage: IS_DEMO
+				? createJSONStorage(() => sessionStorage)
+				: createJSONStorage(() => idbStorage),
 
-			// dirHandle EXCLUÍDO do persist — FileSystemDirectoryHandle não é
-			// JSON-serializável. Seria restaurado como {} sem métodos.
-			// É armazenado via idbSet(DIR_HANDLE_IDB_KEY) e restaurado por restoreDirHandle()
-			partialize: (state) => ({
-				dirPath: state.dirPath,
-				usuario: state.usuario,
-				nivelop: state.nivelop,
-				tables: Object.fromEntries(state.tables),
-			}),
+			partialize: (state) => IS_DEMO
+				? { usuario: state.usuario, nivelop: state.nivelop }
+				: {
+					dirPath: state.dirPath,
+					usuario: state.usuario,
+					nivelop: state.nivelop,
+					tables: Object.fromEntries(state.tables),
+				},
 
 			// Converte Objeto -> Map ao carregar + garante dirHandle nunca vira {}
 			onRehydrateStorage: () => (state) => {

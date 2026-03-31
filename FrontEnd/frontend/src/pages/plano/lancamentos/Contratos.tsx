@@ -220,19 +220,19 @@ export function ContratosPage() {
 		setModalOpen(true);
 	}
 
-	async function handleSave(data: Grupo): Promise<void> {
+	async function handleSave(data: Grupo, adesaoNrParc?: number, adesaoDataInicio?: Date | null): Promise<Grupo | null> {
 		const oldSit = String(selectedRecord?.situacao ?? '').trim();
 		const newSit = String(data.situacao ?? '').trim();
 		if (modalMode === 'edit' && oldSit !== newSit && STATUS_ACTIONS[newSit]) {
 			setPendingSave(data);
 			setStatusMotivo('');
-			return;
+			return null;
 		}
-		void executeSave(data, null);
+		return executeSave(data, null, adesaoNrParc, adesaoDataInicio);
 	}
 
-	async function executeSave(data: Grupo, motivo: string | null) {
-		if (!dirHandle || !table) return;
+	async function executeSave(data: Grupo, motivo: string | null, adesaoNrParc?: number, adesaoDataInicio?: Date | null): Promise<Grupo | null> {
+		if (!dirHandle || !table) return null;
 		setSaving(true);
 		try {
 			// Seta a data de última alteração
@@ -311,7 +311,115 @@ export function ContratosPage() {
 				}
 			}
 
-			// Gera um atendimento para registrar a modificação
+			// Gera taxas tipo 1 (adesão parcelada) ao incluir novo contrato
+			if (modalMode === 'include' && adesaoNrParc && adesaoNrParc > 0) {
+				const classesTable = getTable('classes');
+				const tipcont = String(data.tipcont ?? '').trim();
+				const classesRec = tipcont && classesTable
+					? classesTable.records.find((r) => !r._deleted && String(r.classcod ?? '').trim() === tipcont)
+					: undefined;
+				const vljoia = Number(classesRec?.vljoia ?? 0);
+				if (vljoia > 0) {
+					const taxasTable = getTable('taxas');
+					if (taxasTable) {
+						const vlParcela = Math.floor((vljoia / adesaoNrParc) * 100) / 100;
+						// Primeiro vencimento: usa dataInicio fornecida ou calcula a partir de diapgto
+						const today = new Date();
+						let baseDia: number;
+						let baseMes: number;
+						let baseAno: number;
+						if (adesaoDataInicio) {
+							baseDia = adesaoDataInicio.getDate();
+							baseMes = adesaoDataInicio.getMonth();
+							baseAno = adesaoDataInicio.getFullYear();
+						} else {
+							baseDia = Math.max(1, Math.min(31, parseInt(String(data.diapgto ?? '').trim()) || 1));
+							baseMes = today.getMonth();
+							baseAno = today.getFullYear();
+							if (baseDia <= today.getDate()) {
+								baseMes += 1;
+								if (baseMes > 11) { baseMes = 0; baseAno += 1; }
+							}
+						}
+						const novasTaxas: DbfRecord[] = Array.from({ length: adesaoNrParc }, (_, i) => {
+							const mes = baseMes + i;
+							const ano = baseAno + Math.floor(mes / 12);
+							const mo = mes % 12;
+							const ultimoDia = new Date(ano, mo + 1, 0).getDate();
+							return {
+							codigo: data.codigo,
+							tipo: '1',
+							circ: String(i + 1).padStart(3, '0'),
+							emissao_: new Date(ano, mo, Math.min(baseDia, ultimoDia)),
+							valor: vlParcela,
+							pgto_: null,
+							valorpg: 0,
+							cobrador: String(data.cobrador ?? ''),
+							forma: '',
+							baixa_: null,
+							por: usuario,
+							stat: 'A',
+							filial: '01',
+							flag_excl: '',
+							cedente: '',
+							nnumero: '',
+							codlan: '',
+						};});
+						const newTaxasTable = { ...taxasTable, records: [...taxasTable.records, ...novasTaxas] };
+						await writeDbfFile(dirHandle, 'TAXAS', newTaxasTable);
+						setTable('taxas', newTaxasTable);
+					}
+				}
+			}
+
+			// Gera taxa tipo 2 (mensalidade base da categoria) ao incluir novo contrato
+		if (modalMode === 'include') {
+			const classesTableMensal = getTable('classes');
+			const tipcont = String(data.tipcont ?? '').trim();
+			const classesRecMensal = tipcont && classesTableMensal
+				? classesTableMensal.records.find((r) => !r._deleted && String(r.classcod ?? '').trim() === tipcont)
+				: undefined;
+			const vlmensal = Number(classesRecMensal?.vlmensal ?? 0);
+			if (vlmensal > 0) {
+				const taxasTableMensal = getTable('taxas');
+				if (taxasTableMensal) {
+					const today = new Date();
+					const diapgto = Math.max(1, Math.min(31, parseInt(String(data.diapgto ?? '').trim()) || 1));
+					let baseMes = today.getMonth();
+					let baseAno = today.getFullYear();
+					if (diapgto <= today.getDate()) {
+						baseMes += 1;
+						if (baseMes > 11) { baseMes = 0; baseAno += 1; }
+					}
+					const ultimoDiaMensal = new Date(baseAno, baseMes + 1, 0).getDate();
+					const emissaoMensal = new Date(baseAno, baseMes, Math.min(diapgto, ultimoDiaMensal));
+					const taxaMensalidadeBase: DbfRecord = {
+						codigo: data.codigo,
+						tipo: '2',
+						circ: '001',
+						emissao_: emissaoMensal,
+						valor: vlmensal,
+						pgto_: null,
+						valorpg: 0,
+						cobrador: String(data.cobrador ?? ''),
+						forma: '',
+						baixa_: null,
+						por: usuario,
+						stat: 'A',
+						filial: '01',
+						flag_excl: '',
+						cedente: '',
+						nnumero: '',
+						codlan: '',
+					};
+					const newTaxasTableMensal = { ...taxasTableMensal, records: [...taxasTableMensal.records, taxaMensalidadeBase] };
+					await writeDbfFile(dirHandle, 'TAXAS', newTaxasTableMensal);
+					setTable('taxas', newTaxasTableMensal);
+				}
+			}
+		}
+
+		// Gera um atendimento para registrar a modificação
 			const atendTable = getTable("atend800");
 			if (atendTable) {
 				const nextAtendNum = nextCode(atendTable, "numero", 8);
@@ -340,8 +448,10 @@ export function ContratosPage() {
 				newTable.records.find((r) => r.codigo === data.codigo) ?? null;
 			setHighlightedRecord(savedRec);
 			setTimeout(() => setHighlightedRecord(null), 3000);
+			return savedRec as Grupo | null;
 		} catch (e) {
 			alert("Erro ao salvar: " + String(e));
+			return null;
 		} finally {
 			setSaving(false);
 		}
@@ -504,6 +614,10 @@ export function ContratosPage() {
 					initialData={formData}
 					onSave={handleSave}
 					saving={saving}
+					onIncludeSaved={(savedData) => {
+						setFormData(savedData);
+						setModalMode('edit');
+					}}
 					onAdendos={() =>
 						setAdendosTarget({
 							codigo: formData.codigo,

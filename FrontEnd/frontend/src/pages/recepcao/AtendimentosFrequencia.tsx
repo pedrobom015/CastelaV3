@@ -39,7 +39,11 @@ const LEGENDA = [
 	["#f97316", "Acordo"],
 ] as const;
 
-const TIPO_NOME: Record<string, string> = { A: "Atendimento", R: "Recebimento", C: "Acordo" };
+const TIPO_NOME: Record<string, string> = {
+	A: "Atendimento",
+	R: "Recebimento",
+	C: "Acordo",
+};
 
 export function AtendimentosFrequencia({ registros, dataIni, dataFim }: Props) {
 	// Aplica filtro de período
@@ -58,7 +62,8 @@ export function AtendimentosFrequencia({ registros, dataIni, dataFim }: Props) {
 		if (!dataIni || !dataFim) return false;
 		const ini = new Date(dataIni + "T00:00:00");
 		const fim = new Date(dataFim + "T00:00:00");
-		const diffDias = (fim.getTime() - ini.getTime()) / (1000 * 60 * 60 * 24);
+		const diffDias =
+			(fim.getTime() - ini.getTime()) / (1000 * 60 * 60 * 24);
 		return diffDias < 1; // mesmo dia
 	}, [dataIni, dataFim]);
 
@@ -91,13 +96,23 @@ export function AtendimentosFrequencia({ registros, dataIni, dataFim }: Props) {
 			if (tipo === "A" || tipo === "R" || tipo === "C") entry[tipo]++;
 		});
 		// Preenche todos os dias do intervalo (sem gaps)
-		const result: { label: string; ymd: string; A: number; R: number; C: number }[] = [];
+		const result: {
+			label: string;
+			ymd: string;
+			A: number;
+			R: number;
+			C: number;
+		}[] = [];
 		if (dataIni && dataFim) {
 			const cur = new Date(dataIni + "T00:00:00");
 			const end = new Date(dataFim + "T00:00:00");
 			while (cur <= end) {
 				const ymd = toYMD(cur)!;
-				result.push({ label: formatYMD(ymd), ymd, ...(map.get(ymd) ?? { A: 0, R: 0, C: 0 }) });
+				result.push({
+					label: formatYMD(ymd),
+					ymd,
+					...(map.get(ymd) ?? { A: 0, R: 0, C: 0 }),
+				});
 				cur.setDate(cur.getDate() + 1);
 			}
 		}
@@ -119,8 +134,14 @@ export function AtendimentosFrequencia({ registros, dataIni, dataFim }: Props) {
 				</p>
 				<div className="flex gap-4">
 					{LEGENDA.map(([cor, nome]) => (
-						<span key={nome} className="flex items-center gap-1 text-xs text-gray-500">
-							<span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: cor }} />
+						<span
+							key={nome}
+							className="flex items-center gap-1 text-xs text-gray-500"
+						>
+							<span
+								className="w-2.5 h-2.5 rounded-sm inline-block"
+								style={{ background: cor }}
+							/>
 							{nome}
 						</span>
 					))}
@@ -128,7 +149,9 @@ export function AtendimentosFrequencia({ registros, dataIni, dataFim }: Props) {
 			</div>
 			<p className="text-2xl font-bold text-blue-900 mb-3">
 				{filtrados.length}
-				<span className="text-sm font-normal text-gray-400 ml-1">atendimento(s)</span>
+				<span className="text-sm font-normal text-gray-400 ml-1">
+					atendimento(s)
+				</span>
 			</p>
 
 			{filtrados.length === 0 ? (
@@ -140,9 +163,23 @@ export function AtendimentosFrequencia({ registros, dataIni, dataFim }: Props) {
 					<BarChart
 						data={data}
 						margin={{ top: 4, right: 8, left: -24, bottom: 0 }}
-						barSize={modoHora ? 14 : Math.max(8, Math.min(32, Math.floor(600 / data.length)))}
+						barSize={
+							modoHora
+								? 14
+								: Math.max(
+										8,
+										Math.min(
+											32,
+											Math.floor(600 / data.length),
+										),
+									)
+						}
 					>
-						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+						<CartesianGrid
+							strokeDasharray="3 3"
+							vertical={false}
+							stroke="#f0f0f0"
+						/>
 						<XAxis
 							dataKey="label"
 							tick={{ fontSize: 10, fill: "#9ca3af" }}
@@ -157,13 +194,27 @@ export function AtendimentosFrequencia({ registros, dataIni, dataFim }: Props) {
 							axisLine={false}
 						/>
 						<Tooltip
-							contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e5e7eb" }}
-							labelFormatter={(label) => modoHora ? `Hora: ${label}` : `Data: ${label}`}
-							formatter={(value, name) => [value ?? 0, TIPO_NOME[name as string] ?? name]}
+							contentStyle={{
+								fontSize: 12,
+								borderRadius: 8,
+								border: "1px solid #e5e7eb",
+							}}
+							labelFormatter={(label) =>
+								modoHora ? `Hora: ${label}` : `Data: ${label}`
+							}
+							formatter={(value, name) => [
+								value ?? 0,
+								TIPO_NOME[name as string] ?? name,
+							]}
 						/>
 						<Bar dataKey="A" stackId="s" fill="#3b82f6" />
 						<Bar dataKey="R" stackId="s" fill="#22c55e" />
-						<Bar dataKey="C" stackId="s" fill="#f97316" radius={[3, 3, 0, 0]} />
+						<Bar
+							dataKey="C"
+							stackId="s"
+							fill="#f97316"
+							radius={[3, 3, 0, 0]}
+						/>
 					</BarChart>
 				</ResponsiveContainer>
 			)}

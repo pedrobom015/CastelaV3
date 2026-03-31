@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import {
+	ComposedChart,
 	BarChart,
 	Bar,
 	XAxis,
@@ -11,7 +12,6 @@ import {
 	PieChart,
 	Pie,
 	Cell,
-	LineChart,
 	Line,
 } from "recharts";
 import { useAppStore } from "../../store/appStore";
@@ -109,9 +109,11 @@ function KpiCard({
 
 function ChartCard({
 	title,
+	subtitle,
 	children,
 }: {
 	title: string;
+	subtitle?: string;
 	children: React.ReactNode;
 }) {
 	return (
@@ -120,6 +122,11 @@ function ChartCard({
 				<p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
 					{title}
 				</p>
+				{subtitle && (
+					<p className="text-[10px] text-gray-400 mt-0.5">
+						{subtitle}
+					</p>
+				)}
 			</div>
 			<div className="px-2 pb-3">{children}</div>
 		</div>
@@ -226,21 +233,35 @@ export function PerfilContratoPage() {
 			.sort((a, b) => b.value - a.value);
 	}, [contratos]);
 
-	// ── Por Grupo ───────────────────────────────────────────────────────────────
+	// ── Por Grupo — famílias + representatividade financeira ─────────────────────
 	const porGrupo = useMemo(() => {
-		const map: Record<string, number> = {};
+		const countMap: Record<string, number> = {};
+		const codigoToGrupo: Record<string, string> = {};
 		contratos.forEach((r) => {
-			const cod = String(r.grupo ?? "").trim() || "—";
-			map[cod] = (map[cod] ?? 0) + 1;
+			const grupCod = String(r.grupo ?? "").trim() || "—";
+			const codigo = String(r.codigo ?? "").trim().padStart(9, "0");
+			countMap[grupCod] = (countMap[grupCod] ?? 0) + 1;
+			codigoToGrupo[codigo] = grupCod;
 		});
-		return Object.entries(map)
+
+		const arrecadadoMap: Record<string, number> = {};
+		getRecords(taxasTable).forEach((r) => {
+			const codigo = String(r.codigo ?? "").trim().padStart(9, "0");
+			const grup = codigoToGrupo[codigo];
+			if (!grup) return;
+			arrecadadoMap[grup] =
+				(arrecadadoMap[grup] ?? 0) + Number(r.valorpg ?? 0);
+		});
+
+		return Object.entries(countMap)
 			.map(([cod, v]) => ({
-				grupo: grupoNomes[cod] ?? cod,
-				contratos: v,
+				grupo: cod,
+				familias: v,
+				arrecadado: Math.round((arrecadadoMap[cod] ?? 0) * 100) / 100,
 			}))
-			.sort((a, b) => b.contratos - a.contratos)
+			.sort((a, b) => b.familias - a.familias)
 			.slice(0, 10);
-	}, [contratos, grupoNomes]);
+	}, [contratos, taxasTable]);
 
 	// ── Por Cobrador ────────────────────────────────────────────────────────────
 	const porCobrador = useMemo(() => {
@@ -252,9 +273,9 @@ export function PerfilContratoPage() {
 		return Object.entries(map)
 			.map(([cod, v]) => ({
 				cobrador: cobrNomes[cod] ?? cod,
-				contratos: v,
+				familias: v,
 			}))
-			.sort((a, b) => b.contratos - a.contratos)
+			.sort((a, b) => b.familias - a.familias)
 			.slice(0, 8);
 	}, [contratos, cobrNomes]);
 
@@ -268,16 +289,15 @@ export function PerfilContratoPage() {
 		return Object.entries(map)
 			.map(([cod, v]) => ({
 				regiao: regiaoNomes[cod] ?? cod,
-				contratos: v,
+				familias: v,
 			}))
-			.sort((a, b) => b.contratos - a.contratos)
+			.sort((a, b) => b.familias - a.familias)
 			.slice(0, 8);
 	}, [contratos, regiaoNomes]);
 
-	// ── Idade × Gênero: 1º inscrito por contrato (seq menor = titular) ──────────
+	// ── Idade × Gênero ──────────────────────────────────────────────────────────
 	const idadeGenero = useMemo(() => {
 		const FAIXAS = ["< 30", "30–44", "45–59", "60+", "N/D"] as const;
-		// para cada codigo de contrato, guarda o inscrito com menor seq
 		const titulares: Record<
 			string,
 			{ seq: number; nascto_: unknown; sexo: string }
@@ -319,21 +339,20 @@ export function PerfilContratoPage() {
 		return FAIXAS.map((faixa) => ({ faixa, ...data[faixa] }));
 	}, [inscritsTable]);
 
-	// ── Admissões por Mês (últimos 24 meses) ────────────────────────────────────
+	// ── Admissões por Mês ────────────────────────────────────────────────────────
 	const admissoesPorMes = useMemo(() => {
 		const map: Record<string, number> = {};
 		contratos.forEach((r) => {
 			const ym = yearMonth(r.admissao as Date | null);
 			if (ym) map[ym] = (map[ym] ?? 0) + 1;
 		});
-		const sorted = Object.entries(map)
+		return Object.entries(map)
 			.sort(([a], [b]) => a.localeCompare(b))
 			.slice(-24)
 			.map(([ym, v]) => ({ mes: labelMes(ym), admissoes: v }));
-		return sorted;
 	}, [contratos]);
 
-	// ── Faixa Etária ─ derivado de idadeGenero para manter a mesma fonte ────────
+	// ── Faixa Etária ─────────────────────────────────────────────────────────────
 	const faixaEtaria = useMemo(() => {
 		return idadeGenero.map(({ faixa, M, F }) => ({
 			name: faixa,
@@ -362,8 +381,8 @@ export function PerfilContratoPage() {
 
 			<div className="p-0 flex flex-col gap-4">
 				<PageHeader
-					title="Perfil de Contratos"
-					subtitle="Visão analítica da base de clientes"
+					title="Perfil de Famílias"
+					subtitle="Representatividade dos grupos familiares"
 					actions={
 						<Btn
 							size="sm"
@@ -378,12 +397,12 @@ export function PerfilContratoPage() {
 				{/* ── KPIs status ── */}
 				<div className="grid grid-cols-2 md:grid-cols-5 gap-3">
 					<KpiCard
-						label="Total Contratos"
+						label="Total de Famílias"
 						value={String(kpis.total)}
 						color="#1e3a8a"
 					/>
 					<KpiCard
-						label="Ativos"
+						label="Famílias Ativas"
 						value={String(kpis.ativos)}
 						sub={`${kpis.total ? ((kpis.ativos / kpis.total) * 100).toFixed(0) : 0}%`}
 						color="#10b981"
@@ -394,12 +413,12 @@ export function PerfilContratoPage() {
 						color="#ff914d"
 					/>
 					<KpiCard
-						label="Suspensos"
+						label="Suspensas"
 						value={String(kpis.suspensos)}
 						color="#f59e0b"
 					/>
 					<KpiCard
-						label="Cancelados"
+						label="Canceladas"
 						value={String(kpis.cancelados)}
 						color="#ef4444"
 					/>
@@ -422,7 +441,7 @@ export function PerfilContratoPage() {
 
 				{/* ── Linha 1: Situação + Idade × Gênero ── */}
 				<div className="grid grid-cols-2 gap-4">
-					<ChartCard title="Distribuição por Situação">
+					<ChartCard title="Status das Famílias">
 						<div className="flex gap-4 items-center px-2 pt-1 pb-2">
 							<ResponsiveContainer width="100%" height={180}>
 								<PieChart>
@@ -442,7 +461,7 @@ export function PerfilContratoPage() {
 									</Pie>
 									<Tooltip
 										formatter={(v) => [
-											`${v} contrato(s)`,
+											`${v} família(s)`,
 											"Qtd",
 										]}
 									/>
@@ -493,15 +512,18 @@ export function PerfilContratoPage() {
 					</ChartCard>
 				</div>
 
-				{/* ── Linha 2: Por Grupo + Por Cobrador ── */}
+				{/* ── Linha 2: Famílias por Grupo (financeiro) + Por Cobrador ── */}
 				<div className="grid grid-cols-2 gap-4">
-					<ChartCard title="Contratos por Grupo">
-						<ResponsiveContainer width="100%" height={190}>
-							<BarChart
+					<ChartCard
+						title="Famílias por Grupo"
+						subtitle="Número de famílias e valor arrecadado por grupo"
+					>
+						<ResponsiveContainer width="100%" height={210}>
+							<ComposedChart
 								data={porGrupo}
 								margin={{
 									top: 4,
-									right: 16,
+									right: 40,
 									left: 0,
 									bottom: 0,
 								}}
@@ -509,23 +531,54 @@ export function PerfilContratoPage() {
 							>
 								<CartesianGrid {...gridProps} />
 								<XAxis dataKey="grupo" tick={axisStyle} />
-								<YAxis tick={axisStyle} allowDecimals={false} />
-								<Tooltip
-									formatter={(v) => [`${v} contrato(s)`]}
+								<YAxis
+									yAxisId="familias"
+									tick={axisStyle}
+									allowDecimals={false}
+									width={30}
 								/>
+								<YAxis
+									yAxisId="arrecadado"
+									orientation="right"
+									tick={axisStyle}
+									tickFormatter={(v) =>
+										v >= 1000
+											? `${(v / 1000).toFixed(0)}k`
+											: String(v)
+									}
+									width={36}
+								/>
+								<Tooltip
+									formatter={(v, name) =>
+										name === "Famílias"
+											? [`${v} família(s)`, name]
+											: [formatCurrency(Number(v)), name]
+									}
+								/>
+								<Legend wrapperStyle={{ fontSize: 10 }} />
 								<Bar
-									dataKey="contratos"
-									name="Contratos"
+									yAxisId="familias"
+									dataKey="familias"
+									name="Famílias"
 									fill="#1e3a8a"
 									radius={[3, 3, 0, 0]}
 									maxBarSize={40}
 								/>
-							</BarChart>
+								<Line
+									yAxisId="arrecadado"
+									type="monotone"
+									dataKey="arrecadado"
+									name="Arrecadado"
+									stroke="#10b981"
+									strokeWidth={2}
+									dot={{ fill: "#10b981", r: 3 }}
+								/>
+							</ComposedChart>
 						</ResponsiveContainer>
 					</ChartCard>
 
-					<ChartCard title="Contratos por Cobrador">
-						<ResponsiveContainer width="100%" height={190}>
+					<ChartCard title="Famílias por Cobrador">
+						<ResponsiveContainer width="100%" height={210}>
 							<BarChart
 								data={porCobrador}
 								margin={{
@@ -540,11 +593,11 @@ export function PerfilContratoPage() {
 								<XAxis dataKey="cobrador" tick={axisStyle} />
 								<YAxis tick={axisStyle} allowDecimals={false} />
 								<Tooltip
-									formatter={(v) => [`${v} contrato(s)`]}
+									formatter={(v) => [`${v} família(s)`]}
 								/>
 								<Bar
-									dataKey="contratos"
-									name="Contratos"
+									dataKey="familias"
+									name="Famílias"
 									fill="#ff914d"
 									radius={[3, 3, 0, 0]}
 									maxBarSize={40}
@@ -554,23 +607,10 @@ export function PerfilContratoPage() {
 					</ChartCard>
 				</div>
 
-				{/* ── Linha 3: Admissões por Mês + Faixa Etária ── */}
+				{/* ── Linha 3: Por Região + Faixa Etária ── */}
 				<div className="grid grid-cols-2 gap-4">
-					{/* 		<ChartCard title="Admissões por Mês">
-					<ResponsiveContainer width="100%" height={180}>
-						<LineChart data={admissoesPorMes} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-							<CartesianGrid {...gridProps} />
-							<XAxis dataKey="mes" tick={axisStyle} />
-							<YAxis tick={axisStyle} allowDecimals={false} />
-							<Tooltip formatter={(v) => [`${v} admissão(ões)`]} />
-							<Line type="monotone" dataKey="admissoes" name="Admissões" stroke="#1e3a8a" strokeWidth={2} dot={{ fill: "#1e3a8a", r: 3 }} />
-						</LineChart>
-					</ResponsiveContainer>
-				</ChartCard> */}
-
-					{/* ── Por Região — largura total ── */}
 					{porRegiao.length > 0 && (
-						<ChartCard title="Contratos por Região">
+						<ChartCard title="Famílias por Região">
 							<ResponsiveContainer width="100%" height={160}>
 								<BarChart
 									data={porRegiao}
@@ -589,11 +629,11 @@ export function PerfilContratoPage() {
 										allowDecimals={false}
 									/>
 									<Tooltip
-										formatter={(v) => [`${v} contrato(s)`]}
+										formatter={(v) => [`${v} família(s)`]}
 									/>
 									<Bar
-										dataKey="contratos"
-										name="Contratos"
+										dataKey="familias"
+										name="Famílias"
 										fill="#6366f1"
 										radius={[3, 3, 0, 0]}
 										maxBarSize={48}

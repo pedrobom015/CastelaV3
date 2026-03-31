@@ -25,6 +25,7 @@ const TIPO_OPTS = [
 	{ value: "2", label: "2 — Taxa" },
 	{ value: "3", label: "3 — Carnê" },
 	{ value: "4", label: "4 — Acerto" },
+	{ value: "5", label: "5 — Servico" },
 	{ value: "6", label: "6 — Jóia + Seguro" },
 	{ value: "7", label: "7 — Taxa + Seguro" },
 	{ value: "8", label: "8 — Carnê + Seguro" },
@@ -57,10 +58,15 @@ interface GerarCarneFormProps {
 	onSuccess?: () => void;
 }
 
-export function GerarCarneForm({ initialContrato, onSuccess }: GerarCarneFormProps) {
+export function GerarCarneForm({
+	initialContrato,
+	onSuccess,
+}: GerarCarneFormProps) {
 	const { getTable, setTable, dirHandle, usuario } = useAppStore();
 
-	const [contrato, setContrato] = useState<ContratoResumido | null>(initialContrato ?? null);
+	const [contrato, setContrato] = useState<ContratoResumido | null>(
+		initialContrato ?? null,
+	);
 	const [parcf, setParcf] = useState("");
 	const [vlparc, setVlparc] = useState(""); // "R$ 1.234,56"
 	const [tipo, setTipo] = useState("");
@@ -270,152 +276,158 @@ export function GerarCarneForm({ initialContrato, onSuccess }: GerarCarneFormPro
 
 	return (
 		<div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-				<FormSection title="Parâmetros para Geração">
-					<FormRow cols={2}>
-						<ContratoInput
-							value={contrato?.codigo ?? ""}
-							nomeContrato={contrato?.nome}
-							label="Contrato"
-							required
-							disabled={!!initialContrato}
-							onSelect={handleSelectContrato}
+			<FormSection title="Parâmetros para Geração">
+				<FormRow cols={2}>
+					<ContratoInput
+						value={contrato?.codigo ?? ""}
+						nomeContrato={contrato?.nome}
+						label="Contrato"
+						required
+						disabled={!!initialContrato}
+						onSelect={handleSelectContrato}
+					/>
+					<FormInput
+						label="Vendedor"
+						value={vendedor}
+						onChange={(e) => setVendedor(e.target.value)}
+						maxLength={3}
+						placeholder="Cód. (opcional)"
+					/>
+				</FormRow>
+				<FormRow cols={2}>
+					<FormInput
+						label="Qtd. Parcelas"
+						type="number"
+						value={parcf}
+						onChange={(e) => setParcf(e.target.value)}
+						placeholder="Ex: 12"
+						required
+					/>
+					<div className="flex flex-col gap-0.5">
+						<label className="text-sm font-medium text-gray-700">
+							Valor por Parcela
+							<span className="text-red-500 ml-0.5">*</span>
+						</label>
+						<input
+							type="text"
+							inputMode="numeric"
+							value={vlparc}
+							onChange={(e) =>
+								setVlparc(maskCurrency(e.target.value))
+							}
+							placeholder="R$ 0,00"
+							className="border border-gray-300 rounded px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
 						/>
-						<FormInput
-							label="Vendedor"
-							value={vendedor}
-							onChange={(e) => setVendedor(e.target.value)}
-							maxLength={3}
-							placeholder="Cód. (opcional)"
-						/>
-					</FormRow>
-					<FormRow cols={2}>
-						<FormInput
-							label="Qtd. Parcelas"
-							type="number"
-							value={parcf}
-							onChange={(e) => setParcf(e.target.value)}
-							placeholder="Ex: 12"
-							required
-						/>
-						<div className="flex flex-col gap-0.5">
-							<label className="text-sm font-medium text-gray-700">
-								Valor por Parcela
-								<span className="text-red-500 ml-0.5">*</span>
-							</label>
-							<input
-								type="text"
-								inputMode="numeric"
-								value={vlparc}
-								onChange={(e) =>
-									setVlparc(maskCurrency(e.target.value))
-								}
-								placeholder="R$ 0,00"
-								className="border border-gray-300 rounded px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-							/>
-						</div>
-					</FormRow>
-					<FormRow cols={3}>
-						<FormSelect
-							label="Tipo"
-							value={tipo}
-							onChange={(e) => setTipo(e.target.value)}
-							options={TIPO_OPTS}
-							required
-						/>
-						<FormInput
-							label="Circular Inicial"
-							value={circular}
-							onChange={(e) => setCircular(e.target.value)}
-							maxLength={3}
-							placeholder="001"
-							required
-						/>
-						<div className="flex flex-col gap-0.5">
-							<label className="text-sm font-medium text-gray-700">
-								Vencimento Inicial
-								<span className="text-red-500 ml-0.5">*</span>
-							</label>
-							<input
-								type="text"
-								inputMode="numeric"
-								value={dataInicial}
-								onChange={(e) =>
-									setDataInicial(maskDate(e.target.value))
-								}
-								placeholder="DD/MM/AAAA"
-								maxLength={10}
-								className="border border-gray-300 rounded px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-							/>
-						</div>
-					</FormRow>
-				</FormSection>
-
-				<div className="flex gap-3 mt-4">
-					<Btn
-						onClick={handleGerar}
-						disabled={generating}
-						size="lg"
-						icon="📋"
-					>
-						{generating ? "Gerando..." : "Gerar Carnê"}
-					</Btn>
-					<Btn variant="secondary" onClick={handleLimpar} size="lg">
-						Limpar
-					</Btn>
-				</div>
-
-				{result && (
-					<div
-						className={`mt-4 p-4 rounded-lg border ${
-							result.type === "success"
-								? "bg-green-50 border-green-300 text-green-800"
-								: "bg-red-50 border-red-300 text-red-800"
-						}`}
-					>
-						<div className="flex items-start gap-2">
-							<span className="text-lg">
-								{result.type === "success" ? "✅" : "❌"}
-							</span>
-							<p className="text-sm font-medium">
-								{result.message}
-							</p>
-						</div>
 					</div>
-				)}
+				</FormRow>
+				<FormRow cols={3}>
+					<FormSelect
+						label="Tipo"
+						value={tipo}
+						onChange={(e) => setTipo(e.target.value)}
+						options={TIPO_OPTS}
+						required
+					/>
+					<FormInput
+						label="Circular Inicial"
+						value={circular}
+						onChange={(e) => setCircular(e.target.value)}
+						maxLength={3}
+						placeholder="001"
+						required
+					/>
+					<div className="flex flex-col gap-0.5">
+						<label className="text-sm font-medium text-gray-700">
+							Vencimento Inicial
+							<span className="text-red-500 ml-0.5">*</span>
+						</label>
+						<input
+							type="text"
+							inputMode="numeric"
+							value={dataInicial}
+							onChange={(e) =>
+								setDataInicial(maskDate(e.target.value))
+							}
+							placeholder="DD/MM/AAAA"
+							maxLength={10}
+							className="border border-gray-300 rounded px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+						/>
+					</div>
+				</FormRow>
+			</FormSection>
 
-				<div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-					<h3 className="text-sm font-semibold text-blue-900 mb-2">
-						Informações
-					</h3>
-					<ul className="text-xs text-blue-800 space-y-1">
-						<li>
-							• Clique em 🔍 para buscar o contrato por código,
-							CPF ou nome
-						</li>
-						<li>• PARCF: quantidade de parcelas a gerar</li>
-						<li>• VLPARC: valor de cada parcela em R$</li>
-						<li>
-							• Circular inicial: incrementada automaticamente por
-							parcela
-						</li>
-						<li>
-							• Vencimento inicial: os demais avançam mês a mês
-						</li>
-						<li>• Registros gravados em EMCARNE.DBF e TAXAS.DBF</li>
-					</ul>
+			<div className="flex gap-3 mt-4">
+				<Btn
+					onClick={handleGerar}
+					disabled={generating}
+					size="lg"
+					icon="📋"
+				>
+					{generating ? "Gerando..." : "Gerar Carnê"}
+				</Btn>
+				<Btn variant="secondary" onClick={handleLimpar} size="lg">
+					Limpar
+				</Btn>
+			</div>
+
+			{result && (
+				<div
+					className={`mt-4 p-4 rounded-lg border ${
+						result.type === "success"
+							? "bg-green-50 border-green-300 text-green-800"
+							: "bg-red-50 border-red-300 text-red-800"
+					}`}
+				>
+					<div className="flex items-start gap-2">
+						<span className="text-lg">
+							{result.type === "success" ? "✅" : "❌"}
+						</span>
+						<p className="text-sm font-medium">{result.message}</p>
+					</div>
 				</div>
+			)}
+
+			<div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+				<h3 className="text-sm font-semibold text-blue-900 mb-2">
+					Informações
+				</h3>
+				<ul className="text-xs text-blue-800 space-y-1">
+					<li>
+						• Clique em 🔍 para buscar o contrato por código, CPF ou
+						nome
+					</li>
+					<li>• PARCF: quantidade de parcelas a gerar</li>
+					<li>• VLPARC: valor de cada parcela em R$</li>
+					<li>
+						• Circular inicial: incrementada automaticamente por
+						parcela
+					</li>
+					<li>• Vencimento inicial: os demais avançam mês a mês</li>
+					<li>• Registros gravados em EMCARNE.DBF e TAXAS.DBF</li>
+				</ul>
+			</div>
 		</div>
 	);
 }
 
-export function GerarCarneModal({ isOpen, onClose, initialContrato }: { isOpen: boolean; onClose: () => void; initialContrato?: ContratoResumido | null }) {
+export function GerarCarneModal({
+	isOpen,
+	onClose,
+	initialContrato,
+}: {
+	isOpen: boolean;
+	onClose: () => void;
+	initialContrato?: ContratoResumido | null;
+}) {
 	return (
 		<Modal
 			isOpen={isOpen}
 			onClose={onClose}
 			title={
 				<div className="flex flex-col leading-tight">
-					<span className="text-[10px] font-normal opacity-70 uppercase tracking-wider">Vendas</span>
+					<span className="text-[10px] font-normal opacity-70 uppercase tracking-wider">
+						Vendas
+					</span>
 					<span className="text-sm font-semibold">Gerar Carnê</span>
 				</div>
 			}
@@ -423,7 +435,10 @@ export function GerarCarneModal({ isOpen, onClose, initialContrato }: { isOpen: 
 			zIndex={200}
 			noMinHeight
 		>
-			<GerarCarneForm initialContrato={initialContrato} onSuccess={onClose} />
+			<GerarCarneForm
+				initialContrato={initialContrato}
+				onSuccess={onClose}
+			/>
 		</Modal>
 	);
 }

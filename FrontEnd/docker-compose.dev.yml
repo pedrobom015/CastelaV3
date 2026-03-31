@@ -1,0 +1,12 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: presserv-backend-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/dados-teste:/app/dados-teste
+    env_file:
+      - ./backend/.env

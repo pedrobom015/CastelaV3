@@ -8,10 +8,7 @@ import {
 } from "../../../components/common/PageHeader";
 import { formatCurrency } from "../../../utils/formatters";
 import { searchRecords } from "../../../utils/dbfHelpers";
-import type { DbfRecord } from "../../../types/models";
 import { writeDbfFile } from "../../../services/dbf/DbfReader";
-import { ArqgrupRec, emptyGrupo } from "./GrupoFormFields";
-import { GrupoWizardModal } from "./GrupoWizardModal";
 import {
 	CategoriaWizardModal,
 	type ClasseRec,
@@ -19,6 +16,7 @@ import {
 	numberToMask,
 	parseCurrency,
 } from "./CategoriaWizardModal";
+import { ClsInfoModal, type ClsInfoRec, type ClsItemRec } from "./ClsInfoModal";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -35,19 +33,16 @@ export function Categorias() {
 	const [strVladicional, setStrVladicional] = useState("");
 	const [strVldepend, setStrVldepend] = useState("");
 
-	// grupo modal
-	const [modalGrupo, setModalGrupo] = useState(false);
-	const [editingGrupo, setEditingGrupo] = useState<ArqgrupRec | null>(null);
-	const [formGrupo, setFormGrupo] = useState<ArqgrupRec>(emptyGrupo());
+	// plano modal
+	const [modalPlano, setModalPlano] = useState(false);
+	const [planoClasscod, setPlanoClasscod] = useState("");
 
 	const [saving, setSaving] = useState(false);
 	const [saveError, setSaveError] = useState("");
 	const [highlightedCateg, setHighlightedCateg] = useState<string | null>(
 		null,
 	);
-	const [highlightedGrupo, setHighlightedGrupo] = useState<string | null>(
-		null,
-	);
+	const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
 	const _theme = useThemeStore((s) => s.theme);
 	const primary =
@@ -56,16 +51,11 @@ export function Categorias() {
 			: _theme === "gray"
 				? "#248094"
 				: "#1e3a8a";
-	const selectedBg =
-		_theme === "orange"
-			? "#fff7ed"
-			: _theme === "gray"
-				? "#e0f2fe"
-				: "#eff6ff";
 
 	const classesTable = getTable("classes");
-	const arqgrupTable = getTable("arqgrup");
-	const gruposTable = getTable("grupos"); // GRUPOS.DBF — contratos reais
+	const gruposTable = getTable("grupos");
+	const clsInfoTable = getTable("clsinfo");
+	const clsItemTable = getTable("clsitem");
 
 	const records = useMemo(
 		() =>
@@ -76,55 +66,49 @@ export function Categorias() {
 		[classesTable, search],
 	);
 
-	// mapa classcod → grupos, computado uma vez
-	const gruposPorClasse = useMemo(() => {
-		const map = new Map<string, ArqgrupRec[]>();
-		(arqgrupTable?.records ?? [])
-			.filter((r) => !r._deleted)
-			.forEach((r) => {
-				const cod = String(r.classe ?? "").trim();
-				if (!map.has(cod)) map.set(cod, []);
-				map.get(cod)!.push(r as ArqgrupRec);
-			});
-		return map;
-	}, [arqgrupTable]);
-
-	/**
-	 * Conta contratos e participantes dinamicamente da GRUPOS.DBF.
-	 * contrat  = nº de contratos com grupo == grup
-	 * partic   = soma de (1 titular + nrdepend) por contrato
-	 *
-	 * O sistema antigo gravava esses valores em ARQGRUP.DBF mas não os
-	 * atualizava em tempo real — aqui calculamos sempre ao vivo.
-	 */
-	const statsPorGrupo = useMemo(() => {
-		const map = new Map<string, { contrat: number; partic: number }>();
+	// Famílias e participantes por categoria (direto de GRUPOS.DBF via tipcont)
+	const familiasPorCateg = useMemo(() => {
+		const map = new Map<string, { familias: number; partic: number }>();
 		(gruposTable?.records ?? [])
 			.filter((r) => !r._deleted)
 			.forEach((r) => {
-				const grup = String(r.grupo ?? "").trim();
-				if (!grup) return;
-				if (!map.has(grup)) map.set(grup, { contrat: 0, partic: 0 });
-				const entry = map.get(grup)!;
-				entry.contrat++;
-				entry.partic += 1 + (Number(r.nrdepend) || 0); // 1 titular + dependentes
+				const cat = String(r.tipcont ?? "").trim();
+				if (!cat) return;
+				if (!map.has(cat)) map.set(cat, { familias: 0, partic: 0 });
+				const entry = map.get(cat)!;
+				entry.familias++;
+				entry.partic += 1 + (Number(r.nrdepend) || 0);
 			});
 		return map;
 	}, [gruposTable]);
 
-	const classeOpts = useMemo(() => {
-		const base = [{ value: "", label: "-- Selecione --" }];
-		if (!classesTable) return base;
-		return base.concat(
-			classesTable.records
-				.filter((r) => !r._deleted)
-				.map((r) => ({
-					value: String(r.classcod ?? "").trim(),
-					label: `${String(r.classcod ?? "").trim()} — ${String(r.descricao ?? "").trim()}`,
-				}))
-				.sort((a, b) => a.value.localeCompare(b.value)),
-		);
-	}, [classesTable]);
+	// Mapa classcod → ClsInfoRec
+	const clsInfoMap = useMemo(() => {
+		const map = new Map<string, ClsInfoRec>();
+		(clsInfoTable?.records ?? []).forEach((r) => {
+			const cod = String(r.classcod ?? "").trim();
+			if (cod) map.set(cod, r as ClsInfoRec);
+		});
+		return map;
+	}, [clsInfoTable]);
+
+	// Mapa classcod → ClsItemRec[] ordenado
+	const clsItemMap = useMemo(() => {
+		const map = new Map<string, ClsItemRec[]>();
+		(clsItemTable?.records ?? []).forEach((r) => {
+			const cod = String(r.classcod ?? "").trim();
+			if (!cod) return;
+			if (!map.has(cod)) map.set(cod, []);
+			map.get(cod)!.push(r as ClsItemRec);
+		});
+		map.forEach((items, cod) => {
+			map.set(
+				cod,
+				items.sort((a, b) => Number(a.ordem) - Number(b.ordem)),
+			);
+		});
+		return map;
+	}, [clsItemTable]);
 
 	// ── Categoria ──────────────────────────────────────────────────────────────
 
@@ -215,83 +199,8 @@ export function Categorias() {
 		}
 	}
 
-	// ── Grupo ──────────────────────────────────────────────────────────────────
-
-	function handleNewGrupo(classcod: string) {
-		const recs = arqgrupTable?.records.filter((r) => !r._deleted) ?? [];
-		const maxCod = recs.reduce((max, r) => {
-			const n = parseInt(String(r.grup ?? "").trim(), 10);
-			return isNaN(n) ? max : Math.max(max, n);
-		}, 0);
-		setEditingGrupo(null);
-		setFormGrupo({
-			...emptyGrupo(),
-			grup: String(maxCod + 1).padStart(2, "0"),
-			classe: classcod,
-		});
-		setSaveError("");
-		setModalGrupo(true);
-	}
-
-	function handleEditGrupo(rec: ArqgrupRec) {
-		setEditingGrupo(rec);
-		setFormGrupo({ ...emptyGrupo(), ...rec });
-		setSaveError("");
-		setModalGrupo(true);
-	}
-
-	async function handleSaveGrupo() {
-		if (!dirHandle) {
-			setSaveError("Abra uma pasta de dados antes de salvar.");
-			return;
-		}
-		setSaving(true);
-		setSaveError("");
-		try {
-			const cur = getTable("arqgrup");
-			const newRec: ArqgrupRec = { ...formGrupo };
-			const editKey = editingGrupo
-				? String(editingGrupo.grup ?? "").trim()
-				: null;
-			const rows = editKey
-				? (cur?.records ?? []).map((r) =>
-						String(r.grup ?? "").trim() === editKey ? newRec : r,
-					)
-				: [...(cur?.records ?? []), newRec];
-			const tbl = cur
-				? { ...cur, records: rows }
-				: {
-						header: {
-							version: 3,
-							lastUpdate: new Date(),
-							recordCount: rows.length,
-							headerSize: 0,
-							recordSize: 0,
-							fields: [],
-						},
-						records: rows,
-					};
-			setTable("arqgrup", tbl);
-			await writeDbfFile(dirHandle, "ARQGRUP.DBF", tbl);
-			setModalGrupo(false);
-			setHighlightedGrupo(String(newRec.grup).trim());
-			setTimeout(() => setHighlightedGrupo(null), 3000);
-		} catch (err) {
-			setSaveError("Erro ao salvar: " + String(err));
-		} finally {
-			setSaving(false);
-		}
-	}
-
 	function setC(field: keyof ClasseRec, value: string | number) {
 		setFormCateg((p) => ({ ...p, [field]: value }));
-	}
-
-	function setG(
-		field: keyof ArqgrupRec,
-		value: string | number | Date | null,
-	) {
-		setFormGrupo((p) => ({ ...p, [field]: value }));
 	}
 
 	const totalFormatted = computedTotal
@@ -301,13 +210,26 @@ export function Categorias() {
 			})
 		: "";
 
+	// ── Status helpers ─────────────────────────────────────────────────────────
+
+	const STATUS_ICON: Record<string, string> = {
+		I: "✓",
+		O: "◉",
+		N: "✗",
+	};
+	const STATUS_COLOR: Record<string, string> = {
+		I: "text-green-600",
+		O: "text-yellow-500",
+		N: "text-gray-300",
+	};
+
 	// ── Render ─────────────────────────────────────────────────────────────────
 
 	return (
 		<div className="p-4">
 			<PageHeader
-				title="Categorias e Grupos"
-				subtitle="Planos de cobrança — CLASSES.DBF · ARQGRUP.DBF"
+				title="Planos"
+				subtitle="Planos de cobrança"
 				actions={
 					<>
 						<SearchBar
@@ -348,42 +270,35 @@ export function Categorias() {
 				{records.length} categoria(s)
 			</div>
 
-			{/* ── Cards de categorias ──────────────────────────────────────────── */}
+			{/* ── Cards ────────────────────────────────────────────────────────── */}
 			{records.length === 0 ? (
 				<p className="text-center py-10 text-gray-400 text-sm">
 					Nenhuma categoria encontrada.
 				</p>
 			) : (
-				<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+				<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 items-start">
 					{records.map((rec) => {
 						const cod = String(rec.classcod).trim();
-						const grupos = gruposPorClasse.get(cod) ?? [];
-						const totalContratos = grupos.reduce((s, g) => {
-							const gcod = String(g.grup).trim();
-							return (
-								s +
-								(statsPorGrupo.get(gcod)?.contrat ??
-									Number(g.contrat) ??
-									0)
-							);
-						}, 0);
-						const totalPartic = grupos.reduce((s, g) => {
-							const gcod = String(g.grup).trim();
-							return (
-								s +
-								(statsPorGrupo.get(gcod)?.partic ??
-									Number(g.partic) ??
-									0)
-							);
-						}, 0);
+						const info = clsInfoMap.get(cod);
+						const items = clsItemMap.get(cod) ?? [];
+						const stats = familiasPorCateg.get(cod);
 						const isHighlighted = highlightedCateg === cod;
 						const isSelected = expandedClasse === cod;
 
+						const preco = info?.preco_exib
+							? Number(info.preco_exib)
+							: null;
+						const precoStr = preco
+							? preco.toLocaleString("pt-BR", {
+									minimumFractionDigits: 2,
+									maximumFractionDigits: 2,
+								})
+							: null;
+
 						return (
 							<Fragment key={cod}>
-								{/* ── Card da categoria — clique seleciona, duplo-clique edita ── */}
 								<div
-									className="rounded-xl border text-xs select-none transition-all duration-200 overflow-hidden cursor-pointer"
+									className="rounded-xl border text-xs select-none transition-all duration-200 overflow-hidden cursor-pointer flex flex-col"
 									style={{
 										borderColor: isHighlighted
 											? "#86efac"
@@ -409,298 +324,318 @@ export function Categorias() {
 										handleEditCateg(rec);
 									}}
 								>
-									{/* Cabeçalho */}
+									{/* ── Cabeçalho ──────────────────────── */}
 									<div
-										className="flex items-center gap-2 min-w-0 px-3 py-2 border-b"
+										className="px-4 pt-4 pb-3"
 										style={{
-											borderColor: isSelected
-												? `${primary}33`
-												: "#f3f4f6",
 											background: isSelected
 												? `${primary}0d`
 												: undefined,
+											borderBottom: `1px solid ${isSelected ? primary + "33" : "#f3f4f6"}`,
 										}}
 									>
-										<span
-											className="font-mono font-bold text-sm shrink-0"
-											style={{ color: primary }}
-										>
-											{cod}
-										</span>
-										<span className="font-semibold text-xs text-gray-800 truncate flex-1">
-											{String(rec.descricao ?? "").trim()}
-										</span>
-										<svg
-											className="w-3.5 h-3.5 shrink-0 text-gray-400 hover:text-blue-500 transition-colors cursor-pointer"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											strokeWidth="2"
-											onClick={(e) => {
-												e.stopPropagation();
-												handleEditCateg(rec);
-											}}
-										>
-											<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-											<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-										</svg>
-									</div>
-
-									{/* Estatísticas */}
-									<div className="grid grid-cols-2 gap-x-4 gap-y-1 px-3 py-2 text-[11px] text-gray-600">
-										<div className="flex justify-between">
-											<span className="text-gray-400">
-												Contratos
-											</span>
-											<span className="font-medium text-gray-700">
-												{totalContratos > 0 ? (
-													totalContratos
-												) : (
-													<span className="text-gray-300">
-														—
+										<div className="flex items-start justify-between gap-2">
+											<div className="flex-1 min-w-0">
+												<div className="flex items-center gap-1.5 mb-0.5">
+													<span
+														className="font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded"
+														style={{
+															color: primary,
+															background: `${primary}15`,
+														}}
+													>
+														{cod}
 													</span>
-												)}
-											</span>
-										</div>
-										<div className="flex justify-between">
-											<span className="text-gray-400">
-												Participantes
-											</span>
-											<span className="font-medium text-gray-700">
-												{totalPartic > 0 ? (
-													totalPartic
-												) : (
-													<span className="text-gray-300">
-														—
-													</span>
-												)}
-											</span>
-										</div>
-										<div className="flex justify-between">
-											<span className="text-gray-400">
-												{Number(rec.vlmensal) < 0
-													? "Desconto"
-													: "Valor Adicional"}
-											</span>
-											<span className="font-medium text-gray-700">
-												{rec.vlmensal ? (
-													formatCurrency(
-														Number(rec.vlmensal),
-													)
-												) : (
-													<span className="text-gray-300">
-														—
-													</span>
-												)}
-											</span>
-										</div>
-										<div className="flex justify-between items-start gap-1">
-											<span className="text-gray-400 whitespace-nowrap shrink-0">
-												Ajuste
-											</span>
-											<div className="text-right">
-												<span
-													className="font-semibold cursor-help block"
-													style={{ color: primary }}
-													title={
-														[
-															"Este valor não é o custo do plano.",
-															"Na geração de cobrança o sistema parte do valor da circular e aplica estes ajustes contrato por contrato.",
-															"",
-															rec.vljoia
-																? `Valor de Adesão: ${formatCurrency(Number(rec.vljoia))}`
-																: null,
-															rec.vlmensal
-																? `${Number(rec.vlmensal) < 0 ? "Desconto" : "Valor Adicional"}: ${formatCurrency(Number(rec.vlmensal))}`
-																: null,
-															rec.vldepend
-																? `Por Inscrito no Contrato: ${formatCurrency(Number(rec.vldepend))}`
-																: null,
-														]
-															.filter(
-																(v) =>
-																	v !== null,
-															)
-															.join("\n") ||
-														undefined
-													}
-												>
-													{rec.vltotal ? (
-														formatCurrency(
-															Number(rec.vltotal),
-														)
-													) : (
-														<span className="text-gray-300 font-normal">
-															—
+													{info?.destaque && (
+														<span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
+															★ Destaque
 														</span>
 													)}
-												</span>
-												<span className="text-[10px] text-gray-300">
-													não é o custo do plano
-												</span>
+												</div>
+												<h3
+													className="text-base font-bold leading-tight"
+													style={{ color: primary }}
+												>
+													{String(
+														rec.descricao ?? "",
+													).trim()}
+												</h3>
+												{info?.subtitulo && (
+													<p className="text-[11px] text-gray-500 mt-0.5 leading-snug">
+														{String(
+															info.subtitulo,
+														).trim()}
+													</p>
+												)}
+											</div>
+											{/* Ícones */}
+											<div
+												className="flex items-center gap-1.5 shrink-0 mt-0.5"
+												onClick={(e) =>
+													e.stopPropagation()
+												}
+											>
+												<svg
+													className="w-3.5 h-3.5 text-gray-400 hover:text-blue-500 transition-colors cursor-pointer"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													strokeWidth="2"
+													onClick={() =>
+														handleEditCateg(rec)
+													}
+												>
+													<title>
+														Editar categoria
+													</title>
+													<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+													<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+												</svg>
+												<svg
+													className="w-3.5 h-3.5 text-gray-400 hover:text-green-600 transition-colors cursor-pointer"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													strokeWidth="2"
+													onClick={() => {
+														setPlanoClasscod(cod);
+														setModalPlano(true);
+													}}
+												>
+													<title>
+														Editar apresentação do
+														plano
+													</title>
+													<circle
+														cx="12"
+														cy="12"
+														r="10"
+													/>
+													<line
+														x1="2"
+														y1="12"
+														x2="22"
+														y2="12"
+													/>
+													<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+												</svg>
 											</div>
 										</div>
+
+										{/* Preço */}
+										{precoStr && (
+											<div className="mt-2">
+												<span
+													className="text-2xl font-black"
+													style={{ color: primary }}
+												>
+													R${precoStr}
+												</span>
+												<span className="text-gray-400 text-xs font-medium ml-0.5">
+													/mês
+												</span>
+											</div>
+										)}
 									</div>
 
-									{/* ── Grupos ── */}
-									<div
-										className="border-t px-4 pb-4 pt-3"
-										style={{
-											borderColor: `${primary}22`,
-											background: `${primary}07`,
-										}}
-										onClick={(e) => e.stopPropagation()}
-										onDoubleClick={(e) =>
-											e.stopPropagation()
-										}
-									>
-										<div className="flex items-center justify-between mb-3">
-											<span
-												className="text-xs font-semibold uppercase pl-4 tracking-wide"
-												style={{ color: primary }}
-											>
-												Grupos ({grupos.length})
-											</span>
-											<button
-												onClick={() =>
-													handleNewGrupo(cod)
-												}
-												className="text-xs text-white rounded px-2.5 py-1 font-medium transition-colors"
-												style={{
-													backgroundColor: primary,
-												}}
-											>
-												+ Novo Grupo
-											</button>
-										</div>
-
-										{grupos.length === 0 ? (
-											<p className="text-xs text-gray-400 italic py-1">
-												Nenhum grupo cadastrado para
-												esta categoria.
-											</p>
-										) : (
-											<div className="flex flex-col gap-2">
-												{grupos.map((g) => {
-													const gcod = String(
-														g.grup,
-													).trim();
-													const live =
-														statsPorGrupo.get(gcod);
-													const contratVivo =
-														live?.contrat ??
-														Number(g.contrat) ??
-														0;
-													const particVivo =
-														live?.partic ??
-														Number(g.partic) ??
-														0;
-													const isGrupHighlighted =
-														highlightedGrupo ===
-														gcod;
-
-													return (
-														<div
-															key={gcod}
-															className="rounded-lg border px-3 py-2 text-xs cursor-pointer select-none transition-all duration-200"
-															style={{
-																borderColor:
-																	isGrupHighlighted
-																		? "#86efac"
-																		: "#e0e7ef",
-																background:
-																	isGrupHighlighted
-																		? "#dcfce7"
-																		: "#fff",
-																boxShadow:
-																	isGrupHighlighted
-																		? "0 0 0 2px #86efac"
-																		: undefined,
-															}}
-															onClick={() => {
-																if (!isSelected)
-																	setExpandedClasse(
-																		cod,
-																	);
-															}}
-															onDoubleClick={() =>
-																handleEditGrupo(
-																	g,
-																)
-															}
-															onMouseEnter={(
-																e,
-															) => {
-																if (
-																	!isGrupHighlighted
-																)
-																	(
-																		e.currentTarget as HTMLElement
-																	).style.background =
-																		"#dbeafe";
-															}}
-															onMouseLeave={(
-																e,
-															) => {
-																if (
-																	!isGrupHighlighted
-																)
-																	(
-																		e.currentTarget as HTMLElement
-																	).style.background =
-																		"#fff";
-															}}
-														>
-															<div className="flex items-center justify-between gap-3 text-gray-600">
+									{/* ── Corpo expansível ──────────────── */}
+									{(() => {
+										const isExpanded =
+											expandedCards.has(cod);
+										const hasBody =
+											(info?.cobertura &&
+												String(
+													info.cobertura,
+												).trim()) ||
+											items.length > 0;
+										return (
+											<div className="relative flex flex-col">
+												{/* Conteúdo colapsável */}
+												<div
+													className="overflow-hidden transition-all duration-300"
+													style={{
+														maxHeight: isExpanded
+															? "9999px"
+															: "200px",
+													}}
+												>
+													{/* Cobertura */}
+													{info?.cobertura &&
+														String(
+															info.cobertura,
+														).trim() && (
+															<div
+																className="px-4 py-2 text-[11px] text-gray-600 leading-snug border-b"
+																style={{
+																	background: `${primary}07`,
+																	borderColor: `${primary}22`,
+																}}
+															>
 																<span
-																	className="font-mono font-bold text-sm shrink-0"
+																	className="font-bold mr-1"
 																	style={{
 																		color: primary,
 																	}}
 																>
-																	{gcod}
+																	★
 																</span>
-																<div className="flex items-center gap-3 text-xs">
-																	<span className="text-gray-400">
-																		Contratos{" "}
-																		<span className="font-medium text-gray-700">
-																			{contratVivo ||
-																				"—"}
-																		</span>
-																	</span>
-																	<span className="text-gray-400">
-																		Participantes{" "}
-																		<span className="font-medium text-gray-700">
-																			{particVivo ||
-																				"—"}
-																		</span>
-																	</span>
-																	<svg
-																		className="w-3.5 h-3.5 text-gray-400 hover:text-blue-500 transition-colors cursor-pointer shrink-0"
-																		viewBox="0 0 24 24"
-																		fill="none"
-																		stroke="currentColor"
-																		strokeWidth="2"
-																		onClick={(
-																			e,
-																		) => {
-																			e.stopPropagation();
-																			handleEditGrupo(
-																				g,
-																			);
-																		}}
-																	>
-																		<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-																		<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-																	</svg>
-																</div>
+																{String(
+																	info.cobertura,
+																).trim()}
 															</div>
+														)}
+													{/* Itens */}
+													{items.length > 0 && (
+														<ul className="px-4 py-2 flex flex-col gap-0.5">
+															{items.map(
+																(it, idx) => (
+																	<li
+																		key={
+																			idx
+																		}
+																		className="flex items-start gap-1.5 text-[11px] leading-snug py-0.5"
+																	>
+																		<span
+																			className={`font-bold shrink-0 mt-px ${STATUS_COLOR[String(it.status)] ?? "text-gray-400"}`}
+																		>
+																			{STATUS_ICON[
+																				String(
+																					it.status,
+																				)
+																			] ??
+																				"·"}
+																		</span>
+																		<span
+																			className={
+																				String(
+																					it.status,
+																				) ===
+																				"N"
+																					? "text-gray-400"
+																					: "text-gray-700"
+																			}
+																		>
+																			{String(
+																				it.descricao ??
+																					"",
+																			).trim()}
+																		</span>
+																	</li>
+																),
+															)}
+														</ul>
+													)}
+												</div>
+
+												{/* Gradiente + botão "..." / "▲" */}
+												{hasBody && (
+													<div
+														className="flex justify-center py-1"
+														style={
+															!isExpanded
+																? {
+																		background: `linear-gradient(to bottom, transparent, white 60%)`,
+																		marginTop:
+																			"-28px",
+																		paddingTop:
+																			"16px",
+																		position:
+																			"relative",
+																	}
+																: undefined
+														}
+														onClick={(e) =>
+															e.stopPropagation()
+														}
+													>
+														<button
+															className="text-xs font-bold text-gray-400 hover:text-gray-600 px-3 py-0.5 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors select-none"
+															onClick={(e) => {
+																e.stopPropagation();
+																setExpandedCards(
+																	(prev) => {
+																		const next =
+																			new Set(
+																				prev,
+																			);
+																		if (
+																			next.has(
+																				cod,
+																			)
+																		)
+																			next.delete(
+																				cod,
+																			);
+																		else
+																			next.add(
+																				cod,
+																			);
+																		return next;
+																	},
+																);
+															}}
+														>
+															{isExpanded
+																? "▲"
+																: "···"}
+														</button>
+													</div>
+												)}
+
+												{/* Footer: famílias */}
+												<div
+													className="flex items-center gap-4 px-4 py-2 border-t text-[11px]"
+													style={{
+														borderColor: `${primary}22`,
+														background: `${primary}07`,
+													}}
+												>
+													<div className="flex items-center gap-1">
+														<span className="text-gray-400">
+															Famílias
+														</span>
+														<span
+															className="font-semibold"
+															style={{
+																color: primary,
+															}}
+														>
+															{stats?.familias ??
+																0}
+														</span>
+													</div>
+													<div className="flex items-center gap-1">
+														<span className="text-gray-400">
+															Participantes
+														</span>
+														<span className="font-semibold text-gray-700">
+															{stats?.partic ?? 0}
+														</span>
+													</div>
+													{rec.vlmensal ||
+													rec.vldepend ? (
+														<div className="ml-auto flex items-center gap-1">
+															<span className="text-gray-400">
+																Ajuste
+															</span>
+															<span
+																className="font-semibold"
+																style={{
+																	color: primary,
+																}}
+															>
+																{formatCurrency(
+																	Number(
+																		rec.vltotal,
+																	),
+																)}
+															</span>
 														</div>
-													);
-												})}
+													) : null}
+												</div>
 											</div>
-										)}
-									</div>
+										);
+									})()}
 								</div>
 							</Fragment>
 						);
@@ -710,15 +645,9 @@ export function Categorias() {
 
 			{/* ══ Modal — Categoria ════════════════════════════════════════════════ */}
 			{(() => {
-				const contratoCount = (
-					gruposPorClasse.get(String(formCateg.classcod).trim()) ?? []
-				).reduce(
-					(s, g) =>
-						s +
-						(statsPorGrupo.get(String(g.grup).trim())?.contrat ??
-							Number(g.contrat) ??
-							0),
-					0,
+				const contratoCount = stats_for_modal(
+					familiasPorCateg,
+					String(formCateg.classcod).trim(),
 				);
 				return (
 					<CategoriaWizardModal
@@ -746,35 +675,25 @@ export function Categorias() {
 				);
 			})()}
 
-			{/* ══ Modal — Grupo ════════════════════════════════════════════════════ */}
-			{(() => {
-				const grupCod = String(formGrupo.grup).trim();
-				const live = statsPorGrupo.get(grupCod);
-				const participRecords = (gruposTable?.records ?? []).filter(
-					(r) =>
-						!r._deleted && String(r.grupo ?? "").trim() === grupCod,
-				);
-				return (
-					<GrupoWizardModal
-						isOpen={modalGrupo}
-						onClose={() => {
-							setModalGrupo(false);
-							setSaveError("");
-						}}
-						onSave={handleSaveGrupo}
-						editing={!!editingGrupo}
-						form={formGrupo}
-						set={setG}
-						classeOpts={classeOpts}
-						liveContrat={live?.contrat ?? formGrupo.contrat}
-						livePartic={live?.partic ?? formGrupo.partic}
-						participRecords={participRecords}
-						saving={saving}
-						saveError={saveError}
-						primary={primary}
-					/>
-				);
-			})()}
+			{/* ══ Modal — Apresentação do Plano ══════════════════════════════════ */}
+			<ClsInfoModal
+				isOpen={modalPlano}
+				onClose={() => setModalPlano(false)}
+				classcod={planoClasscod}
+				descricao={
+					records.find(
+						(r) => String(r.classcod).trim() === planoClasscod,
+					)?.descricao ?? ""
+				}
+				primary={primary}
+			/>
 		</div>
 	);
+}
+
+function stats_for_modal(
+	map: Map<string, { familias: number; partic: number }>,
+	cod: string,
+): number {
+	return map.get(cod)?.familias ?? 0;
 }

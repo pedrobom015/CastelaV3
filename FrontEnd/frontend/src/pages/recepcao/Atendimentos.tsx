@@ -527,7 +527,7 @@ export function Atendimentos() {
 									: "border-transparent text-gray-500 hover:text-gray-700"
 							}`}
 						>
-							Adendos
+							Produtos / Serviços
 						</button>
 					</div>
 

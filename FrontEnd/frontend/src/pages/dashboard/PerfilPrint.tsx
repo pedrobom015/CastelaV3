@@ -59,11 +59,11 @@ export interface PerfilPrintData {
 	taxasKpis: { emitido: number; arrecadado: number; inadimplencia: number };
 	porSituacao: { name: string; value: number; cor: string }[];
 	idadeGenero: { faixa: string; M: number; F: number }[];
-	porGrupo: { grupo: string; contratos: number }[];
-	porCobrador: { cobrador: string; contratos: number }[];
+	porGrupo: { grupo: string; familias: number; arrecadado: number }[];
+	porCobrador: { cobrador: string; familias: number }[];
 	admissoesPorMes: { mes: string; admissoes: number }[];
 	faixaEtaria: { name: string; value: number }[];
-	porRegiao: { regiao: string; contratos: number }[];
+	porRegiao: { regiao: string; familias: number }[];
 }
 
 interface PerfilPrintProps {
@@ -232,7 +232,7 @@ export function PerfilPrint({ data, onClose }: PerfilPrintProps) {
 					}}
 				>
 					Gerado em {new Date().toLocaleDateString("pt-BR")} — Base
-					completa de contratos
+					das famílias por grupo
 				</p>
 
 				{/* KPIs status */}
@@ -439,7 +439,7 @@ export function PerfilPrint({ data, onClose }: PerfilPrintProps) {
 									formatter={(v) => [`${v} contrato(s)`]}
 								/>
 								<Bar
-									dataKey="contratos"
+									dataKey="familias"
 									name="Contratos"
 									fill="#1e3a8a"
 									radius={[2, 2, 0, 0]}
@@ -468,7 +468,7 @@ export function PerfilPrint({ data, onClose }: PerfilPrintProps) {
 									formatter={(v) => [`${v} contrato(s)`]}
 								/>
 								<Bar
-									dataKey="contratos"
+									dataKey="familias"
 									name="Contratos"
 									fill="#ff914d"
 									radius={[2, 2, 0, 0]}
@@ -525,7 +525,7 @@ export function PerfilPrint({ data, onClose }: PerfilPrintProps) {
 											wrapperStyle={{ fontSize: 9 }}
 										/>
 										<Bar
-											dataKey="contratos"
+											dataKey="familias"
 											name="Contratos"
 											fill="#6366f1"
 											radius={[2, 2, 0, 0]}

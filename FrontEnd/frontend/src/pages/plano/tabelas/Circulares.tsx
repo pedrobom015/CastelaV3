@@ -5,6 +5,7 @@ import { Modal, ConfirmDialog } from '../../../components/common/Modal'
 import { PageHeader, Btn, SearchBar } from '../../../components/common/PageHeader'
 import { FormInput, FormSection, FormRow } from '../../../components/common/FormField'
 import { formatDate, formatCurrency, formatMesRef } from '../../../utils/formatters'
+import { maskCurrency, parseCurrency, numberToMask } from './CategoriaWizardModal'
 import { searchRecords } from '../../../utils/dbfHelpers'
 import type { DbfRecord } from '../../../types/models'
 import { writeDbfFile } from '../../../services/dbf/DbfReader'
@@ -41,6 +42,7 @@ export function Circulares() {
   const [editing, setEditing] = useState<CircularRec | null>(null)
   const [form, setForm] = useState<CircularRec>(emptyRec())
   const [confirmDelete, setConfirmDelete] = useState<CircularRec | null>(null)
+  const [strValor, setStrValor] = useState('')
   const [saving, setSaving] = useState(false)
   const [highlightedRow, setHighlightedRow] = useState<DbfRecord | null>(null)
 
@@ -57,12 +59,15 @@ export function Circulares() {
     rec.funcionar = usuario
     setEditing(null)
     setForm(rec)
+    setStrValor('')
     setModalOpen(true)
   }
 
   function handleEdit(record: DbfRecord) {
-    setEditing(record as CircularRec)
-    setForm({ ...(record as CircularRec) })
+    const rec = record as CircularRec
+    setEditing(rec)
+    setForm({ ...rec })
+    setStrValor(numberToMask(Number(rec.valor ?? 0)))
     setModalOpen(true)
   }
 
@@ -80,7 +85,7 @@ export function Circulares() {
     setSaving(true)
     try {
       const currentTable = getTable('circular')
-      const newRec: CircularRec = { ...form, funcionar: usuario || form.funcionar }
+      const newRec: CircularRec = { ...form, valor: parseCurrency(strValor), funcionar: usuario || form.funcionar }
       let updatedRecords: DbfRecord[]
       if (editing) {
         updatedRecords = (currentTable?.records ?? []).map((r) => (r === editing ? newRec : r))
@@ -136,12 +141,12 @@ export function Circulares() {
       >
         <FormSection title="Identificação">
           <FormRow cols={3}>
-            <FormInput label="Grupo" value={form.grupo} onChange={(e) => set('grupo', e.target.value)} maxLength={2} required />
+            <FormInput label="Grupo" value={form.grupo} onChange={(e) => set('grupo', e.target.value)} maxLength={4} required />
             <FormInput label="Circular" value={form.circ} onChange={(e) => set('circ', e.target.value)} maxLength={3} required />
             <FormInput label="Mês Ref. (MMAA)" value={form.mesref} onChange={(e) => set('mesref', e.target.value)} maxLength={4} placeholder="MMAA" />
           </FormRow>
           <FormRow cols={2}>
-            <FormInput label="Valor" type="number" step="0.01" value={String(form.valor)} onChange={(e) => set('valor', parseFloat(e.target.value) || 0)} />
+            <FormInput label="Valor" value={strValor} onChange={(e) => setStrValor(maskCurrency(e.target.value))} />
             <FormInput label="Proc. Pendentes" type="number" value={String(form.procpend)} onChange={(e) => set('procpend', parseInt(e.target.value) || 0)} />
           </FormRow>
         </FormSection>

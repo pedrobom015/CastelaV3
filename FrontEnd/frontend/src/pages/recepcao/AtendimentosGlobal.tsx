@@ -285,7 +285,11 @@ function toYMD(val: unknown): string | null {
 	if (isNaN(d.getTime())) return null;
 	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
-
+const getDataRetroativa = (dias: number) => {
+	const d = new Date();
+	d.setDate(d.getDate() - dias);
+	return toYMD(d) ?? "";
+};
 export function AtendimentosGlobal() {
 	const tables = useAppStore((s) => s.tables);
 
@@ -295,7 +299,7 @@ export function AtendimentosGlobal() {
 	const [busca, setBusca] = useState("");
 	const [filtroTipo, setFiltroTipo] = useState("TODOS");
 	const [operadoresSel, setOperadoresSel] = useState<Set<string>>(new Set());
-	const [dataIni, setDataIni] = useState(hojeStr);
+	const [dataIni, setDataIni] = useState(() => getDataRetroativa(20));
 	const [dataFim, setDataFim] = useState(hojeStr);
 
 	const atend800 = tables.get("atend800");

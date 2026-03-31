@@ -367,6 +367,9 @@ export function InscritosPanel({
 			const newTable = { ...table, records: recs };
 			await writeDbfFile(dirHandle, "INSCRITS", newTable);
 			setTable("inscrits", newTable);
+			if (mode === "include") {
+				setEditOpen(false);
+			}
 			setHighlightedRow(savedRec);
 			setTimeout(() => setHighlightedRow(null), 3000);
 		} catch (e) {
@@ -641,9 +644,18 @@ export function InscritosPanel({
 											<FormInput
 												label="Data Falecimento"
 												type="date"
-												value={toDateInputValue(
-													form.falecto_,
-												)}
+												value={
+													form.falecto_ &&
+													!isNaN(
+														new Date(
+															form.falecto_,
+														).getTime(),
+													)
+														? new Date(form.falecto_)
+																.toISOString()
+																.substring(0, 10)
+														: ""
+												}
 												onChange={(e) =>
 													setF(
 														"falecto_",

@@ -26,6 +26,13 @@ scp -i "$EC2_KEY" -o StrictHostKeyChecking=no \
   "$EC2_USER@$EC2_HOST:/tmp/presserv-images.tar.gz"
 
 echo ""
+echo "▶ Enviando dados-teste para EC2..."
+rsync -az \
+  -e "ssh -i $EC2_KEY -o StrictHostKeyChecking=no" \
+  "$LOCAL_DIR/backend/dados-teste/" \
+  "$EC2_USER@$EC2_HOST:$REMOTE_DIR/backend/dados-teste/"
+
+echo ""
 echo "▶ Enviando docker-compose e nginx.conf..."
 rsync -az \
   -e "ssh -i $EC2_KEY -o StrictHostKeyChecking=no" \

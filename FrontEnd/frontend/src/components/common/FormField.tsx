@@ -32,7 +32,7 @@ export const FormInput = forwardRef<HTMLInputElement, InputProps>(
 			label,
 			error,
 			required,
-			className = "",
+			className = "", // Este className agora vai para a DIV
 			inline = false,
 			labelWidth,
 			...props
@@ -42,8 +42,10 @@ export const FormInput = forwardRef<HTMLInputElement, InputProps>(
 		const wrapper = inline
 			? "flex items-center gap-2"
 			: "flex flex-col gap-0.5";
+
 		return (
-			<div className={wrapper}>
+			/* AQUI: Adicionei o className na div pai */
+			<div className={`${wrapper} ${className}`}>
 				{label && (
 					<label
 						className={labelClass}
@@ -60,7 +62,8 @@ export const FormInput = forwardRef<HTMLInputElement, InputProps>(
 				<div className="flex-1">
 					<input
 						ref={ref}
-						className={`${inputClass} ${className}`}
+						/* AQUI: Removi o ${className} daqui para não duplicar estilos */
+						className={inputClass}
 						{...props}
 					/>
 					{error && <p className={errorClass}>{error}</p>}
@@ -177,10 +180,10 @@ export function FormSection({
 	children: React.ReactNode;
 }) {
 	return (
-		<fieldset className="rounded p-3 mb-0">
-			{/* 		<legend className="px-2 text-sm font-semibold text-blue-900 uppercase">
+		<fieldset className="border border-gray-200 rounded p-3 mb-0">
+			<legend className="px-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
 				{title}
-			</legend> */}
+			</legend>
 			<div className="grid gap-2">{children}</div>
 		</fieldset>
 	);
@@ -202,6 +205,7 @@ export function FormRow({
 			4: "grid-cols-4",
 			5: "grid-cols-5",
 			6: "grid-cols-6",
+			7: "grid-cols-7",
 		}[cols] || "grid-cols-2";
 
 	return (

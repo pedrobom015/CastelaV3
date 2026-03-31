@@ -1,5 +1,8 @@
 import datetime
+import os
 import struct
+from dotenv import load_dotenv
+load_dotenv()
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +12,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 app = FastAPI(title="Presserv DBF API", version="1.0.0")
+
+# Simula expiração de sessão (Cloudflare 403) em todas as operações de escrita.
+# Para ativar: FORCE_403=true no arquivo backend/.env ou variável de ambiente.
+FORCE_403 = os.getenv("FORCE_403", "false").lower() == "true"
 
 app.add_middleware(
     CORSMiddleware,
@@ -34,13 +41,17 @@ def _read_dbf(table_name: str) -> tuple[list[dict], list[dict]]:
     path = DATA_DIR / f"{table_name.upper()}.DBF"
     if not path.exists():
         raise HTTPException(404, f"{table_name.upper()}.DBF não encontrado")
-    try:
-        table = DBF(str(path), encoding="latin-1", ignore_missing_memofile=True)
-        fields = [{"name": f.name, "type": f.type, "length": f.length} for f in table.fields]
-        records = [{k: _serialize(v) for k, v in dict(row).items()} for row in table]
-        return fields, records
-    except Exception as e:
-        raise HTTPException(500, f"Erro ao ler {table_name}: {e}")
+    for enc in ("utf-8", "latin-1", "cp850"):
+        try:
+            table = DBF(str(path), encoding=enc, ignore_missing_memofile=True)
+            fields = [{"name": f.name, "type": f.type, "length": f.length} for f in table.fields]
+            records = [{k: _serialize(v) for k, v in dict(row).items()} for row in table]
+            return fields, records
+        except UnicodeDecodeError:
+            continue
+        except Exception as e:
+            raise HTTPException(500, f"Erro ao ler {table_name}: {e}")
+    raise HTTPException(500, f"Não foi possível decodificar {table_name}.DBF (utf-8/latin-1/cp850)")
 
 
 def _dbf_path(table_name: str) -> Path:
@@ -56,7 +67,7 @@ def _encode_field_value(value: Any, ftype: str, length: int, decimals: int) -> b
     """Serializa um valor para bytes no formato DBF."""
     if ftype in ("C",):
         s = str(value) if value is not None else ""
-        return s.encode("latin-1", errors="replace")[:length].ljust(length, b" ")
+        return s.encode("utf-8", errors="replace")[:length].ljust(length, b" ")
 
     if ftype in ("N", "F"):
         if value is None or value == "":
@@ -70,7 +81,7 @@ def _encode_field_value(value: Any, ftype: str, length: int, decimals: int) -> b
                 s = f"{num:.{decimals}f}"
             else:
                 s = str(int(num))
-            raw = s.encode("latin-1", errors="replace")[-length:].rjust(length, b" ")
+            raw = s.encode("utf-8", errors="replace")[-length:].rjust(length, b" ")
         return raw[:length].rjust(length, b" ")
 
     if ftype == "D":
@@ -82,7 +93,7 @@ def _encode_field_value(value: Any, ftype: str, length: int, decimals: int) -> b
                 s = " " * 8
         else:
             s = " " * 8
-        return s.encode("latin-1")
+        return s.encode("utf-8")
 
     if ftype == "L":
         return b"T" if value else b"F"
@@ -92,7 +103,7 @@ def _encode_field_value(value: Any, ftype: str, length: int, decimals: int) -> b
 
     # fallback
     s = str(value) if value is not None else ""
-    return s.encode("latin-1", errors="replace")[:length].ljust(length, b" ")
+    return s.encode("utf-8", errors="replace")[:length].ljust(length, b" ")
 
 
 def _write_dbf(path: Path, fields: list[dict], records: list[dict]) -> None:
@@ -172,6 +183,8 @@ def get_table(table_name: str):
 @app.put("/tables/{table_name}")
 def replace_table(table_name: str, body: dict):
     """Substitui todos os registros da tabela (recebe lista completa)."""
+    if FORCE_403:
+        raise HTTPException(403, "Simulação de sessão expirada (FORCE_403=true)")
     path = _dbf_path(table_name)
     records_data = body.get("records", [])
     try:
@@ -187,6 +200,8 @@ def replace_table(table_name: str, body: dict):
 @app.put("/tables/{table_name}/records/{record_index}")
 def update_record(table_name: str, record_index: int, body: dict):
     """Atualiza os campos de um registro existente pelo índice (0-based)."""
+    if FORCE_403:
+        raise HTTPException(403, "Simulação de sessão expirada (FORCE_403=true)")
     fields, records = _read_dbf(table_name)
     if record_index < 0 or record_index >= len(records):
         raise HTTPException(400, f"Índice {record_index} fora do range (0-{len(records)-1})")
@@ -202,6 +217,8 @@ def update_record(table_name: str, record_index: int, body: dict):
 @app.post("/tables/{table_name}/records")
 def add_record(table_name: str, body: dict):
     """Acrescenta um novo registro ao final da tabela."""
+    if FORCE_403:
+        raise HTTPException(403, "Simulação de sessão expirada (FORCE_403=true)")
     fields, records = _read_dbf(table_name)
     records.append({k.lower(): v for k, v in body.items()})
     path = _dbf_path(table_name)

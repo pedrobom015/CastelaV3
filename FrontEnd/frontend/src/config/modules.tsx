@@ -174,10 +174,15 @@ export const MODULES: ModuleDef[] = [
 		],
 		sessions: [
 			{ label: "Contratos", path: "/lancamentos/contratos" },
+			{ label: "Planos", path: "/tabelas/categorias" },
+			{ label: "Produtos & Serviços", path: "/tabelas/produtos" },
 			{ label: "Cobrança", path: "/cobranca/consulta-debitos" },
-			{ label: "Categoria dos Planos", path: "/tabelas/categorias" },
 			{ label: "Relatórios", path: "/relatorios/contratos-cobr" },
-			{ label: "Apoio", path: "/apoio/parametros" },
+			{ label: "Processos", path: "/lancamentos/processos" },
+			{
+				label: "Auxílio Funeral",
+				path: "/lancamentos/auxilio-funeral",
+			},
 		],
 		menu: [
 			{
@@ -193,6 +198,10 @@ export const MODULES: ModuleDef[] = [
 						path: "/lancamentos/reintegracao",
 					},
 					{ label: "Processos", path: "/lancamentos/processos" },
+					{
+						label: "Auxílio Funeral",
+						path: "/lancamentos/auxilio-funeral",
+					},
 				],
 			},
 			{
@@ -277,7 +286,7 @@ export const MODULES: ModuleDef[] = [
 						label: "Geração dos Débitos",
 						children: [
 							{
-								label: "Débitos do Mês",
+								label: "Débitos de Rateio",
 								path: "/cobranca/geracao/mes",
 							},
 							{
@@ -535,6 +544,18 @@ export const MODULES: ModuleDef[] = [
 					},
 					{ label: "Plano de Senhas", path: "/apoio/senhas" },
 					{ label: "Gerar Dados de Teste", path: "/apoio/seed-data" },
+					{
+						label: "Seed Categorias de Planos",
+						path: "/apoio/seed-classes",
+					},
+					{
+						label: "Seed Grupos",
+						path: "/apoio/seed-grupo",
+					},
+					{
+						label: "Seed Processos",
+						path: "/apoio/seed-processo",
+					},
 					{ label: "Sobre...", path: "/apoio/sobre" },
 				],
 			},

@@ -2,6 +2,21 @@ import { cp850ToString } from './cp850'
 import type { DbfRecord } from '../../types/models'
 import { saveTableToBackend } from './backendWriter'
 
+const utf8Decoder = new TextDecoder('utf-8', { fatal: false })
+
+/**
+ * Decodifica bytes de um campo textual do DBF.
+ * Tenta UTF-8 primeiro; se o resultado contiver o caractere de substituição (U+FFFD),
+ * usa CP850 (codificação padrão de arquivos DBF antigos/DOS).
+ */
+function decodeDbfString(bytes: Uint8Array): string {
+  const utf8Result = utf8Decoder.decode(bytes)
+  if (utf8Result.includes('\uFFFD')) {
+    return cp850ToString(bytes)
+  }
+  return utf8Result.trimEnd()
+}
+
 const IS_DEMO = import.meta.env.VITE_MODE_DEMO === 'true'
 
 export interface DbfField {
@@ -66,7 +81,7 @@ export function parseDbfBuffer(buffer: ArrayBuffer, fileName: string): DbfTable 
     // Nome termina no primeiro byte nulo
     let nameEnd = 0
     while (nameEnd < 11 && nameBytes[nameEnd] !== 0) nameEnd++
-    const name = cp850ToString(nameBytes.slice(0, nameEnd)).toLowerCase()
+    const name = cp850ToString(nameBytes.slice(0, nameEnd)).toLowerCase() // nomes de campos são sempre ASCII
     const type = String.fromCharCode(bytes[offset + 11])
     const length = bytes[offset + 16]
     const decimals = bytes[offset + 17]
@@ -92,7 +107,7 @@ export function parseDbfBuffer(buffer: ArrayBuffer, fileName: string): DbfTable 
 
     for (const field of fields) {
       const rawBytes = bytes.slice(fieldOffset, fieldOffset + field.length)
-      const rawStr = cp850ToString(rawBytes)
+      const rawStr = decodeDbfString(rawBytes)
 
       switch (field.type) {
         case 'C': // Character

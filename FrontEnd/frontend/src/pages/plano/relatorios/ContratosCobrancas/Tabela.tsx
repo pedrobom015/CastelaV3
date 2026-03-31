@@ -10,6 +10,20 @@ interface Props {
 	pageSize: number;
 }
 
+const SIT_LABEL: Record<string, string> = {
+	'1': 'Ativo', '2': 'Cancelado', '3': 'Suspenso', '4': 'Inadimplente', '0': 'Inativo', 'B': 'Baixado',
+}
+
+function SituacaoBadge({ sit }: { sit: string }) {
+	const s = sit.trim().toUpperCase()
+	const label = SIT_LABEL[s] ?? s
+	const color =
+		s === 'B' ? 'bg-green-100 text-green-800' :
+		s === '1' ? 'bg-blue-100 text-blue-800' :
+		'bg-yellow-100 text-yellow-800'
+	return <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${color}`}>{label}</span>
+}
+
 export function ContratosCobrancasTabela({
 	resultado,
 	totais,
@@ -67,8 +81,7 @@ export function ContratosCobrancasTabela({
 						<th className="border border-gray-200 p-1.5 text-left font-semibold">Código</th>
 						<th className="border border-gray-200 p-1.5 text-left font-semibold">Nome</th>
 						<th className="border border-gray-200 p-1.5 text-center font-semibold">Grp</th>
-						<th className="border border-gray-200 p-1.5 text-center font-semibold">Sit</th>
-						<th className="border border-gray-200 p-1.5 text-center font-semibold">Cobrador</th>
+						<th className="border border-gray-200 p-1.5 text-center font-semibold">Situação</th>
 						<th className="border border-gray-200 p-1.5 text-center font-semibold">Admissão</th>
 						<th className="border border-gray-200 p-1.5 text-right font-semibold">Total</th>
 						<th className="border border-gray-200 p-1.5 text-right font-semibold">Pago</th>
@@ -83,8 +96,9 @@ export function ContratosCobrancasTabela({
 								<td className="border border-gray-200 p-1.5 text-xs">{String(r.codigo ?? "")}</td>
 								<td className="border border-gray-200 p-1.5 text-xs">{String(r.nome ?? "")}</td>
 								<td className="border border-gray-200 p-1.5 text-xs text-center">{String(r.grupo ?? "")}</td>
-								<td className="border border-gray-200 p-1.5 text-xs text-center">{String(r.situacao ?? "")}</td>
-								<td className="border border-gray-200 p-1.5 text-xs text-center">{String(r.cobrador ?? "")}</td>
+								<td className="border border-gray-200 p-1.5 text-xs text-center">
+									<SituacaoBadge sit={String(r.situacao ?? "")} />
+								</td>
 								<td className="border border-gray-200 p-1.5 text-xs text-center">{formatDate(r.admissao as Date | null)}</td>
 								<td className="border border-gray-200 p-1.5 text-xs text-right">{formatCurrency(s.total)}</td>
 								<td className="border border-gray-200 p-1.5 text-xs text-right">{formatCurrency(s.pago)}</td>

@@ -1,0 +1,20 @@
+<log4php:configuration xmlns:log4php="http://logging.apache.org/log4php/">
+	<appender name="defaultAppender" class="LoggerAppenderConsole">
+		<layout class="LoggerLayoutPattern">
+			<param name="conversionPattern" value="%d [%t] %p %logger{0} - %m%n" />
+		</layout>
+	</appender>
+	<appender name="sqlAppender" class="LoggerAppenderConsole">
+		<layout class="LoggerLayoutPattern">
+			<param name="conversionPattern" value="%d [%t] %p %logger{0} - %m%n" />
+		</layout>
+	</appender>
+    <logger name="default" additivity="false">
+        <level value="DEBUG" />
+        <appender_ref ref="defaultAppender" />
+    </logger>
+	<logger name="sql" additivity="false">
+        <level value="DEBUG" />
+        <appender_ref ref="sqlAppender" />
+    </logger>
+</log4php:configuration>

@@ -13,7 +13,7 @@ type TaxaRec = DbfRecord & {
 }
 
 const STAT_LABEL: Record<string, string> = {
-  '1': 'Pago', '2': 'Pendente', '3': 'Vencido', '0': 'Cancelado',
+  '1': 'Pago', '2': 'Pendente', '3': 'Vencido', '0': 'Cancelado', 'B': 'Baixado',
 }
 
 const COLUMNS: Column[] = [
@@ -27,13 +27,12 @@ const COLUMNS: Column[] = [
   { key: 'valor', label: 'Valor', width: '100px', align: 'right', render: (v) => formatCurrency(Number(v)) },
   { key: 'pgto_', label: 'Dt. Pagto.', width: '100px', render: (v) => formatDate(v as Date) },
   { key: 'valorpg', label: 'Vl. Pago', width: '100px', align: 'right', render: (v) => formatCurrency(Number(v)) },
-  { key: 'cobrador', label: 'Cobrador', width: '80px', align: 'center' },
   {
     key: 'stat', label: 'Situação', width: '100px',
     render: (v) => {
       const s = String(v ?? '').trim()
       const label = STAT_LABEL[s] ?? s
-      const color = s === '1' ? 'bg-green-100 text-green-800' : s === '0' ? 'bg-gray-100 text-gray-700' : 'bg-yellow-100 text-yellow-800'
+      const color = s === 'B' || s === '1' ? 'bg-green-100 text-green-800' : s === '0' ? 'bg-gray-100 text-gray-700' : 'bg-yellow-100 text-yellow-800'
       return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${color}`}>{label}</span>
     },
   },
@@ -45,6 +44,11 @@ export function ConsultaDebitos() {
   const [filterCodigo, setFilterCodigo] = useState('')
   const [filterCobrador, setFilterCobrador] = useState('')
   const [filterCirc, setFilterCirc] = useState('')
+  const [emissaoDe, setEmissaoDe] = useState('')
+  const [emissaoAte, setEmissaoAte] = useState('')
+  const [pagtoDe, setPagtoDe] = useState('')
+  const [pagtoAte, setPagtoAte] = useState('')
+  const [filtrosOpen, setFiltrosOpen] = useState(false)
 
   const table = getTable('taxas')
 
@@ -53,9 +57,13 @@ export function ConsultaDebitos() {
     if (filterCodigo.trim()) recs = recs.filter((r) => String(r.codigo ?? '').trim().toLowerCase().includes(filterCodigo.toLowerCase()))
     if (filterCobrador.trim()) recs = recs.filter((r) => String(r.cobrador ?? '').trim().toLowerCase().includes(filterCobrador.toLowerCase()))
     if (filterCirc.trim()) recs = recs.filter((r) => String(r.circ ?? '').trim().toLowerCase().includes(filterCirc.toLowerCase()))
+    if (emissaoDe) recs = recs.filter((r) => r.emissao_ instanceof Date && r.emissao_ >= new Date(emissaoDe + 'T00:00:00'))
+    if (emissaoAte) recs = recs.filter((r) => r.emissao_ instanceof Date && r.emissao_ <= new Date(emissaoAte + 'T23:59:59'))
+    if (pagtoDe) recs = recs.filter((r) => r.pgto_ instanceof Date && r.pgto_ >= new Date(pagtoDe + 'T00:00:00'))
+    if (pagtoAte) recs = recs.filter((r) => r.pgto_ instanceof Date && r.pgto_ <= new Date(pagtoAte + 'T23:59:59'))
     if (search.trim()) recs = searchRecords({ ...table!, records: recs }, search, ['codigo', 'tipo', 'circ', 'cobrador']) as TaxaRec[]
     return recs
-  }, [table, search, filterCodigo, filterCobrador, filterCirc])
+  }, [table, search, filterCodigo, filterCobrador, filterCirc, emissaoDe, emissaoAte, pagtoDe, pagtoAte])
 
   const totalEmitido = useMemo(() => sumField(records, 'valor'), [records])
   const totalPago = useMemo(() => sumField(records, 'valorpg'), [records])
@@ -72,28 +80,62 @@ export function ConsultaDebitos() {
       />
 
       {/* Filtros rápidos */}
-      <div className="bg-white border border-gray-200 rounded p-3 mb-4">
-        <div className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">Filtros</div>
-        <div className="grid grid-cols-3 gap-3">
-          <FormInput
-            label="Código"
-            value={filterCodigo}
-            onChange={(e) => setFilterCodigo(e.target.value)}
-            placeholder="Filtrar por código..."
-          />
-          <FormInput
-            label="Cobrador"
-            value={filterCobrador}
-            onChange={(e) => setFilterCobrador(e.target.value)}
-            placeholder="Filtrar por cobrador..."
-          />
-          <FormInput
-            label="Circular"
-            value={filterCirc}
-            onChange={(e) => setFilterCirc(e.target.value)}
-            placeholder="Filtrar por circular..."
-          />
-        </div>
+      <div className="bg-white border border-gray-200 rounded mb-4">
+        <button
+          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-600 uppercase tracking-wide hover:bg-gray-50 transition-colors"
+          onClick={() => setFiltrosOpen((o) => !o)}
+        >
+          <span className="text-xs text-gray-500">{filtrosOpen ? '▲' : '▼'}</span>
+          <span>Filtros</span>
+        </button>
+        {filtrosOpen && (
+          <div className="px-3 pb-3">
+            <FormRow cols={7}>
+              <FormInput
+                label="Código"
+                value={filterCodigo}
+                onChange={(e) => setFilterCodigo(e.target.value)}
+                placeholder="Código..."
+              />
+              <FormInput
+                label="Cobrador"
+                value={filterCobrador}
+                onChange={(e) => setFilterCobrador(e.target.value)}
+                placeholder="Cobrador..."
+              />
+              <FormInput
+                label="Circular"
+                value={filterCirc}
+                onChange={(e) => setFilterCirc(e.target.value)}
+                placeholder="Circular..."
+              />
+              <FormInput
+                label="Emissão de"
+                type="date"
+                value={emissaoDe}
+                onChange={(e) => setEmissaoDe(e.target.value)}
+              />
+              <FormInput
+                label="Emissão até"
+                type="date"
+                value={emissaoAte}
+                onChange={(e) => setEmissaoAte(e.target.value)}
+              />
+              <FormInput
+                label="Pagamento de"
+                type="date"
+                value={pagtoDe}
+                onChange={(e) => setPagtoDe(e.target.value)}
+              />
+              <FormInput
+                label="Pagamento até"
+                type="date"
+                value={pagtoAte}
+                onChange={(e) => setPagtoAte(e.target.value)}
+              />
+            </FormRow>
+          </div>
+        )}
       </div>
 
       <div className="mb-2 text-sm text-gray-500">{records.length} registro(s)</div>

@@ -88,7 +88,7 @@ export function GruposPage() {
       return isNaN(n) ? m : Math.max(m, n)
     }, 0)
     setEditing(null)
-    setForm({ ...emptyGrupo(), grup: String(max + 1).padStart(2, '0') })
+    setForm({ ...emptyGrupo(), grup: String(max + 1).padStart(4, '0') })
     setSaveError('')
     setModalOpen(true)
   }

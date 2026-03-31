@@ -707,7 +707,7 @@ function CategoriaModalWizard({
 							</div>
 
 							{/* Ajuste total */}
-							<div className="mt-4 border border-slate-200 rounded-xl overflow-hidden">
+							{/* 				<div className="mt-4 border border-slate-200 rounded-xl overflow-hidden">
 								<div className="flex items-center justify-between px-4 py-3 bg-slate-50">
 									<span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
 										Total
@@ -727,7 +727,7 @@ function CategoriaModalWizard({
 										(acréscimo ou desconto).
 									</p>
 								</div>
-							</div>
+							</div> */}
 						</div>
 					</div>
 				);
@@ -862,7 +862,7 @@ function CategoriaModalWizard({
 		>
 			<div
 				className="flex flex-row overflow-hidden"
-				style={{ height: "min(82vh, 680px)" }}
+				style={{ height: "min(82vh, 700px)" }}
 			>
 				{/* ── Sidebar ── */}
 				<div className="w-64 shrink-0 bg-white border-r border-slate-100 p-6 flex flex-col gap-2">
@@ -936,7 +936,7 @@ function CategoriaModalWizard({
 				</div>
 
 				{/* ── Conteúdo ── */}
-				<div className="flex-1 flex flex-col min-h-0 bg-white">
+				<div className="flex-1 flex flex-col min-h-0 bg-white h-[500px] overflow-auto">
 					<div className="shrink-0 px-8 py-6 border-b border-slate-50 flex items-start justify-between">
 						<div>
 							<h1 className="text-lg font-bold text-slate-800 tracking-tight">
@@ -963,7 +963,7 @@ function CategoriaModalWizard({
 						</button>
 					</div>
 
-					<div className="flex-1 overflow-y-auto px-8 pl-6 pr-6 pb-6 pt-2">
+					<div className="flex-1 min-h-0 overflow-y-auto px-8 pl-6 pr-6 pb-6 pt-2">
 						{renderStep()}
 						{saveError && (
 							<p className="text-sm text-red-600 mt-4 p-3 bg-red-50 rounded-xl">

@@ -1,8 +1,10 @@
-import { useState, useMemo } from "react";
-import { formatCurrency } from "../../../utils/formatters";
+import { useMemo } from "react";
 import type { Grupo } from "../../../types/models";
 import { useAppStore } from "../../../store/appStore";
-import { TcarnesInput } from "../vendas/TcarnesInput";
+import { Mensalidade } from "./Mensalidade";
+import { Adesao } from "./Adesao";
+import { ProdutosServicos } from "./ProdutosServicos";
+import { Estimativas } from "./Estimativas";
 
 interface FichaFinanceiraProps {
 	form: Grupo;
@@ -13,7 +15,20 @@ interface FichaFinanceiraProps {
 	primaryLight: string;
 	grupoOpts: { value: string; label: string }[];
 	categoriaOpts: { value: string; label: string }[];
+	mode: "include" | "edit" | "view";
+	adesaoNrParc: number;
+	setAdesaoNrParc: (n: number) => void;
+	adesaoDataInicio: Date | null;
+	setAdesaoDataInicio: (d: Date) => void;
 }
+
+const TIPCOB_MULT: Record<string, number> = {
+	M: 1,
+	B: 2,
+	T: 3,
+	S: 6,
+	A: 12,
+};
 
 export function FichaFinanceira({
 	form,
@@ -24,19 +39,24 @@ export function FichaFinanceira({
 	primaryLight,
 	grupoOpts,
 	categoriaOpts,
+	mode,
+	adesaoNrParc,
+	setAdesaoNrParc,
+	adesaoDataInicio,
+	setAdesaoDataInicio,
 }: FichaFinanceiraProps) {
 	const { getTable } = useAppStore();
 	useAppStore((s) => s.tables); // re-renderiza quando qualquer tabela muda
-	const [editingGrupo, setEditingGrupo] = useState(false);
-	const [editingCategoria, setEditingCategoria] = useState(false);
-	const [editingCarne, setEditingCarne] = useState(false);
 
 	const classesTable = getTable("classes");
 	const arqgrupTable = getTable("arqgrup");
 	const circularTable = getTable("circular");
-	const tcarnesTable = getTable("tcarnes");
 	const taxasTable = getTable("taxas");
 	const parAdmTable = getTable("par_adm");
+	const adencobTable = getTable("adencob");
+	const adendosTable = getTable("adendos");
+	const pradendoTable = getTable("pradendo");
+	const inscritosTable = getTable("inscrits");
 
 	const fichaData = useMemo(() => {
 		if (!classesTable) return null;
@@ -101,7 +121,18 @@ export function FichaFinanceira({
 		// Mensalidade regular — sem categoria explícita, vlmensal/vldepend não entram
 		const vlmensal = usouFallback ? 0 : Number(classes?.vlmensal ?? 0);
 		const vldepend = usouFallback ? 0 : Number(classes?.vldepend ?? 0);
-		const nrdepend = Number(form.nrdepend ?? 0);
+		// codigoPad necessário antes de nrdepend
+		const codigoPadMensal = String(form.codigo ?? "").trim().padStart(9, "0");
+		// Conta dependentes vivos da tabela INSCRITS (vivofalec="V", excluindo titular ehtitular="S")
+		const nrdepend = inscritosTable
+			? (inscritosTable.records ?? []).filter(
+					(r) =>
+						!r._deleted &&
+						String(r.codigo ?? "").trim().padStart(9, "0") === codigoPadMensal &&
+						String(r.ehtitular ?? "").trim() !== "S" &&
+						String(r.vivofalec ?? "").trim() === "V",
+				).length
+			: Number(form.nrdepend ?? 0);
 		const mforma = Math.max(1, parseInt(String(form.formapgto ?? "")) || 1);
 		const rvlaux = ultimaCirc?.valor ?? 0;
 		const baseMensal = rvlaux + vlmensal + nrdepend * vldepend;
@@ -109,46 +140,25 @@ export function FichaFinanceira({
 		const valorMensalidade =
 			prior === "S" ? baseMensal * mforma : baseMensal;
 
-		// Carné de venda (joia parcelada) — lookup via vlcarne → TCARNES.tip
-		const vlcarneCode = String(form.vlcarne ?? "").trim();
-		let carne: {
-			tip: string;
-			vali: number;
-			parf: number;
-			parm: number;
-			formapgto: string;
-			vlPorParcela: number;
-		} | null = null;
-		if (vlcarneCode && tcarnesTable) {
-			const tcarnesRec = tcarnesTable.records.find(
-				(r) =>
-					!r._deleted && String(r.tip ?? "").trim() === vlcarneCode,
-			);
-			if (tcarnesRec) {
-				const vali = Number(tcarnesRec.vali ?? 0);
-				const parf = Math.max(1, Number(tcarnesRec.parf ?? 1));
-				// Valor por parcela conforme emc_01f9: floor(vali/parf * 10) / 10
-				const vlPorParcela = Math.floor((vali / parf) * 10) / 10;
-				carne = {
-					tip: vlcarneCode,
-					vali,
-					parf,
-					parm: Number(tcarnesRec.parm ?? 0),
-					formapgto: String(tcarnesRec.formapgto ?? ""),
-					vlPorParcela,
-				};
-			}
-		}
+		// Tipo 3 periódico: (vlmensal + nrdepend×vldepend) × mforma
+		const valorPeriodico = (vlmensal + nrdepend * vldepend) * mforma;
 
-		// Tipo 3 periódico: vlparc (TCARNES.vali) + (vlmensal + nrdepend×vldepend) × mforma
-		const vlparc = carne?.vali ?? 0;
-		const valorPeriodico =
-			vlparc + (vlmensal + nrdepend * vldepend) * mforma;
-
-		const totalMensal = valorMensalidade + (carne?.vlPorParcela ?? 0);
+		const totalMensal = valorMensalidade;
 
 		// Previsão de cobrança baseada na tabela TAXAS
 		const hoje = new Date();
+
+		// Mensalidade Base só entra no Saldo Devedor se admissão > 30 dias
+		const admissaoRaw = form.admissao;
+		const admissaoDate: Date | null =
+			admissaoRaw instanceof Date
+				? admissaoRaw
+				: typeof admissaoRaw === "string" && (admissaoRaw as string).trim()
+					? (() => { const d = new Date(admissaoRaw as string); return isNaN(d.getTime()) ? null : d; })()
+					: null;
+		const admissaoMaior30Dias =
+			admissaoDate !== null &&
+			hoje.getTime() - admissaoDate.getTime() > 30 * 86400000;
 		const codigoPad = String(form.codigo ?? "")
 			.trim()
 			.padStart(9, "0");
@@ -158,6 +168,9 @@ export function FichaFinanceira({
 		// Tipos que representam cobranças de plano (circular/categoria)
 		const isPlanTipo = (r: { tipo?: unknown }) =>
 			[2, 3, 4].includes(parseInt(String(r.tipo ?? "").trim(), 10));
+		// Tipo 5 (permanente) e 9 (parcelado) são gerenciados pelo produtosData — excluir dos extras
+		const isProdutoTipo = (r: { tipo?: unknown }) =>
+			[5, 9].includes(parseInt(String(r.tipo ?? "").trim(), 10));
 		// Coerce emissao_ para Date mesmo após rehidratação do IDB (pode vir como string)
 		const toDate = (v: unknown): Date | null => {
 			if (v instanceof Date) return v;
@@ -192,7 +205,8 @@ export function FichaFinanceira({
 			| { tipo: "sem_historico"; extras?: ExtrasInfo };
 		let previsao: PrevisaoCobranca = { tipo: "sem_historico" };
 		let paidPlanMes = 0;
-		let totalVencido = 0;
+		let planVencido = 0;
+		let extrasVencido = 0;
 
 		if (
 			situacaoContrato !== "1" &&
@@ -210,13 +224,17 @@ export function FichaFinanceira({
 						.trim()
 						.padStart(9, "0") === codigoPad,
 			);
-			// Saldo Devedor: todos stat=A com emissao_ < hoje, qualquer tipo
-			totalVencido = taxasContrato
-				.filter((r) => {
-					if (String(r.stat ?? "").trim() !== "A") return false;
-					const em = toDate(r.emissao_);
-					return em !== null && em < hoje;
-				})
+			// Saldo Devedor: separa plano de extras (stat=A e emissao_ < hoje)
+			const vencidosAbertos = taxasContrato.filter((r) => {
+				if (String(r.stat ?? "").trim() !== "A") return false;
+				const em = toDate(r.emissao_);
+				return em !== null && em < hoje;
+			});
+			planVencido = vencidosAbertos
+				.filter((r) => isPlanTipo(r))
+				.reduce((a, r) => a + Number(r.valor ?? 0), 0);
+			extrasVencido = vencidosAbertos
+				.filter((r) => !isPlanTipo(r) && !isProdutoTipo(r))
 				.reduce((a, r) => a + Number(r.valor ?? 0), 0);
 			// Separa taxas do plano (tipo 2/3/4) das extras no mês corrente
 			const estesMes = (r: (typeof taxasContrato)[0]) => {
@@ -234,13 +252,19 @@ export function FichaFinanceira({
 				(r) =>
 					estesMes(r) &&
 					!isPlanTipo(r) &&
+					!isProdutoTipo(r) &&
 					String(r.stat ?? "").trim() === "A",
 			);
-			// Taxas de plano em atraso (meses anteriores, abertas)
+			// Taxas de plano em atraso (meses anteriores, abertas) — exclui meses futuros
+			const mesAnterior = (em: Date) =>
+				em.getFullYear() < hoje.getFullYear() ||
+				(em.getFullYear() === hoje.getFullYear() &&
+					em.getMonth() < hoje.getMonth());
 			const pendentesAntigos = taxasContrato.filter((r) => {
-				if (toDate(r.emissao_) === null) return false;
+				const em = toDate(r.emissao_);
+				if (em === null) return false;
 				return (
-					!estesMes(r) &&
+					mesAnterior(em) &&
 					isPlanTipo(r) &&
 					String(r.stat ?? "").trim() === "A"
 				);
@@ -359,6 +383,7 @@ export function FichaFinanceira({
 			classeEfetiva,
 			descricao: String(classes?.descricao ?? ""),
 			vljoia: Number(classes?.vljoia ?? 0),
+			nrparcClasse: Number(classes?.nrparc ?? 1),
 			prior,
 			vlmensal,
 			vldepend,
@@ -369,10 +394,10 @@ export function FichaFinanceira({
 			baseMensal,
 			valorMensalidade,
 			valorPeriodico,
-			carne,
 			totalMensal,
 			categoriaEncontrada: !!classes,
 			usouFallback,
+			admissaoMaior30Dias,
 			previsao,
 			paidPlanMes,
 			qtcircs: Number(form.qtcircs ?? 0),
@@ -438,11 +463,12 @@ export function FichaFinanceira({
 					origPrior === "S"
 						? origBaseMensal * mforma
 						: origBaseMensal;
-				const origTotalMensal =
-					origValorMensalidade + (carne?.vlPorParcela ?? 0);
+				const origTotalMensal = origValorMensalidade;
 				const grupoOuCategoriaAlterado =
-					String(form.grupo ?? "").trim() !== origGrupoCode ||
-					String(form.tipcont ?? "").trim() !== origTipcont;
+					mode !== "include" && (
+						String(form.grupo ?? "").trim() !== origGrupoCode ||
+						String(form.tipcont ?? "").trim() !== origTipcont
+					);
 				const diferencaMensalidade = grupoOuCategoriaAlterado
 					? valorMensalidade - origValorMensalidade
 					: 0;
@@ -451,31 +477,499 @@ export function FichaFinanceira({
 					origTotalMensal,
 					grupoOuCategoriaAlterado,
 					diferencaMensalidade,
-					totalVencido,
+					planVencido,
+					extrasVencido,
 				};
 			})(),
 		};
 	}, [
 		form.tipcont,
 		form.grupo,
-		form.nrdepend,
 		form.formapgto,
-		form.vlcarne,
 		form.codigo,
 		form.situacao,
 		form.saitxa,
 		form.diapgto,
 		form.qtcircs,
 		form.qtcircpg,
+		form.admissao,
 		classesTable,
 		arqgrupTable,
 		circularTable,
-		tcarnesTable,
 		taxasTable,
 		parAdmTable,
+		inscritosTable,
 		initialData.grupo,
 		initialData.tipcont,
+		mode,
 	]);
+
+	const produtosData = useMemo(() => {
+		const codigoPad = String(form.codigo ?? "")
+			.trim()
+			.padStart(9, "0");
+		const toDate = (v: unknown): Date | null => {
+			if (v instanceof Date) return v;
+			if (typeof v === "string" && v.trim()) {
+				const d = new Date(v);
+				return isNaN(d.getTime()) ? null : d;
+			}
+			return null;
+		};
+		const hoje = new Date();
+
+		const configs = (adencobTable?.records ?? []).filter(
+			(r) =>
+				!r._deleted &&
+				String(r.flag_excl ?? "").trim() !== "*" &&
+				String(r.codigo ?? "").trim() === codigoPad,
+		);
+		const adendosAtivos = (adendosTable?.records ?? []).filter(
+			(r) =>
+				!r._deleted &&
+				String(r.flag_excl ?? "").trim() !== "*" &&
+				String(r.codigo ?? "").trim() === codigoPad,
+		);
+
+		const taxas59 = (taxasTable?.records ?? []).filter(
+			(r) =>
+				!r._deleted &&
+				String(r.flag_excl ?? "").trim() !== "*" &&
+				String(r.codigo ?? "")
+					.trim()
+					.padStart(9, "0") === codigoPad &&
+				["5", "9"].includes(String(r.tipo ?? "").trim()),
+		);
+		const tipo5All = taxas59.filter(
+			(r) => String(r.tipo ?? "").trim() === "5",
+		);
+		const tipo9All = taxas59
+			.filter((r) => String(r.tipo ?? "").trim() === "9")
+			.sort(
+				(a, b) =>
+					parseInt(String(a.circ ?? "0"), 10) -
+					parseInt(String(b.circ ?? "0"), 10),
+			);
+
+		// Distribui tipo9All entre configs não-permanentes posicionalmente (por nparcelas)
+		let tipo9Cursor = 0;
+		const tipo9BySeq = new Map<string, typeof tipo9All>();
+		for (const c of configs) {
+			if (String(c.permanente ?? "N").trim() === "S") continue;
+			const seq = String(c.seq ?? "").trim();
+			const n = Math.max(1, Number(c.nparcelas ?? 1));
+			tipo9BySeq.set(seq, tipo9All.slice(tipo9Cursor, tipo9Cursor + n));
+			tipo9Cursor += n;
+		}
+
+		// Distribui tipo5All entre configs permanentes.
+		// Prioridade: match exato por codlan (seq do ADENCOB gravado na taxa).
+		// Fallback para dados sem codlan: intervalo de datainicio_ (compatibilidade).
+		const seqInt = (v: unknown) => parseInt(String(v ?? "0").trim(), 10);
+		const tipo5ComCodelan = tipo5All.filter((r) => String(r.codlan ?? "").trim() !== "");
+		const tipo5SemCodelan = tipo5All.filter((r) => String(r.codlan ?? "").trim() === "");
+
+		const permConfigsSorted = configs
+			.filter((c) => String(c.permanente ?? "N").trim() === "S")
+			.map((c) => ({
+				seq: String(c.seq ?? "").trim(),
+				dt: toDate(c.datainicio_) ?? new Date(0),
+			}))
+			.sort((a, b) => a.dt.getTime() - b.dt.getTime());
+		const tipo5BySeq = new Map<string, typeof tipo5All>();
+
+		// 1ª passagem: match exato via codlan
+		for (const { seq } of permConfigsSorted) {
+			tipo5BySeq.set(
+				seq,
+				tipo5ComCodelan.filter((r) => seqInt(r.codlan) === seqInt(seq)),
+			);
+		}
+		// 2ª passagem: intervalo para taxas sem codlan (dados legados / seed)
+		for (let i = 0; i < permConfigsSorted.length; i++) {
+			const { seq, dt } = permConfigsSorted[i];
+			const nextDt =
+				permConfigsSorted[i + 1]?.dt ?? new Date(8640000000000000);
+			const intervalTaxas = tipo5SemCodelan.filter((r) => {
+				const d = toDate(r.emissao_);
+				return d !== null && d >= dt && d < nextDt;
+			});
+			const existing = tipo5BySeq.get(seq) ?? [];
+			tipo5BySeq.set(seq, [...existing, ...intervalTaxas]);
+		}
+
+		const items = configs.map((c) => {
+			const codproduto = String(c.codproduto ?? "").trim();
+			const prod = (pradendoTable?.records ?? []).find(
+				(r) =>
+					!r._deleted && String(r.codigo ?? "").trim() === codproduto,
+			);
+			const permanente = String(c.permanente ?? "N").trim() === "S";
+			const tipcob = String(c.tipcob ?? "M").trim();
+			const valorConfig = Number(c.valor ?? 0);
+			const nparcelas = Number(c.nparcelas ?? 1);
+			const datainicio = toDate(c.datainicio_);
+			const mult = TIPCOB_MULT[tipcob] ?? 1;
+			const valorPeriodo = permanente ? valorConfig * mult : valorConfig;
+
+			// Cada config usa apenas a sua fatia exclusiva de taxas
+			const seq = String(c.seq ?? "").trim();
+			const taxasTipo = permanente
+				? (tipo5BySeq.get(seq) ?? [])
+				: (tipo9BySeq.get(seq) ?? []);
+			const emAberto = taxasTipo.filter((r) => {
+				const stat = String(r.stat ?? "").trim();
+				return stat === "A" || stat === "1";
+			});
+			const pagas = taxasTipo.filter((r) => {
+				const stat = String(r.stat ?? "").trim();
+				return (
+					stat !== "A" &&
+					stat !== "1" &&
+					(r.pgto_ != null || Number(r.valorpg ?? 0) > 0)
+				);
+			});
+			const vencidas = emAberto.filter((r) => {
+				const d = toDate(r.emissao_);
+				return d !== null && d < hoje;
+			});
+			const proximas = emAberto
+				.map((r) => ({ r, d: toDate(r.emissao_) }))
+				.filter(
+					(x): x is { r: typeof x.r; d: Date } =>
+						x.d !== null && x.d >= hoje,
+				)
+				.sort((a, b) => a.d.getTime() - b.d.getTime());
+
+			return {
+				codproduto,
+				nome: prod ? String(prod.produto ?? "").trim() : codproduto,
+				permanente,
+				tipcob,
+				valorConfig,
+				valorPeriodo,
+				nparcelas,
+				datainicio,
+				mult,
+				totalTaxas: taxasTipo.length,
+				pagas: pagas.length,
+				valorPago: pagas.reduce(
+					(s, r) => s + Number(r.valorpg ?? r.valor ?? 0),
+					0,
+				),
+				emAberto: emAberto.length,
+				valorAberto: emAberto.reduce(
+					(s, r) => s + Number(r.valor ?? 0),
+					0,
+				),
+				vencidas: vencidas.length,
+				valorVencido: vencidas.reduce(
+					(s, r) => s + Number(r.valor ?? 0),
+					0,
+				),
+				proxima: proximas[0]?.d ?? null,
+				proximaValor: proximas[0]
+					? Number(proximas[0].r.valor ?? 0)
+					: 0,
+			};
+		});
+
+		const totalAberto = taxas59
+			.filter((r) => {
+				const s = String(r.stat ?? "").trim();
+				return s === "A" || s === "1";
+			})
+			.reduce((s, r) => s + Number(r.valor ?? 0), 0);
+		const totalPago = taxas59
+			.filter((r) => {
+				const s = String(r.stat ?? "").trim();
+				return s !== "A" && s !== "1";
+			})
+			.reduce((s, r) => s + Number(r.valorpg ?? r.valor ?? 0), 0);
+		const totalVencido59 = taxas59
+			.filter((r) => {
+				const s = String(r.stat ?? "").trim();
+				const d = toDate(r.emissao_);
+				return (s === "A" || s === "1") && d !== null && d < hoje;
+			})
+			.reduce((s, r) => s + Number(r.valor ?? 0), 0);
+
+		// Taxas 5/9 deste mês
+		const estesMes59 = taxas59.filter((r) => {
+			const d = toDate(r.emissao_);
+			return (
+				d &&
+				d.getFullYear() === hoje.getFullYear() &&
+				d.getMonth() === hoje.getMonth()
+			);
+		});
+		const pagas59Mes = estesMes59.filter((r) => {
+			const s = String(r.stat ?? "").trim();
+			return s !== "A" && s !== "1";
+		});
+		const abertas59Mes = estesMes59.filter((r) => {
+			const s = String(r.stat ?? "").trim();
+			return s === "A" || s === "1";
+		});
+		const vencidas59Mes = abertas59Mes.filter((r) => {
+			const d = toDate(r.emissao_);
+			return d && d < hoje;
+		});
+
+		// Valor pago e aberto deste mês
+		const valorPago59Mes = pagas59Mes.reduce(
+			(s, r) => s + Number(r.valorpg ?? r.valor ?? 0),
+			0,
+		);
+		const valorAberto59Mes = abertas59Mes.reduce(
+			(s, r) => s + Number(r.valor ?? 0),
+			0,
+		);
+		// Total cobrado no mês (pago + aberto) — base para calcular crédito real
+		const totalCobrado59Mes = estesMes59.reduce(
+			(s, r) => s + Number(r.valor ?? 0),
+			0,
+		);
+		const valorVencido59Mes = vencidas59Mes.reduce(
+			(s, r) => s + Number(r.valor ?? 0),
+			0,
+		);
+
+		// Previsão de próximo vencimento de produtos/serviços (taxas futuras abertas)
+		const futuras59 = taxas59
+			.filter((r) => {
+				const s = String(r.stat ?? "").trim();
+				const d = toDate(r.emissao_);
+				return (s === "A" || s === "1") && d !== null && d > hoje;
+			})
+			.map((r) => ({ r, d: toDate(r.emissao_) as Date }))
+			.sort((a, b) => a.d.getTime() - b.d.getTime());
+		const proximaFutura = futuras59[0] ?? null;
+
+		// Valor para "Próximo mês": parcelados (tipo 9) via TAXAS + permanentes com periodicidade correta
+		const proxMesInicio = new Date(
+			hoje.getFullYear(),
+			hoje.getMonth() + 1,
+			1,
+		);
+		const proxMesFim = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0);
+		const taxasProxMes9 = tipo9All.filter((r) => {
+			const d = toDate(r.emissao_);
+			return d && d >= proxMesInicio && d <= proxMesFim;
+		});
+		const valorProxMes9 = taxasProxMes9.reduce(
+			(s, r) => s + Number(r.valor ?? 0),
+			0,
+		);
+		// Permanentes mensais (mult=1): recorrência garantida todo mês
+		const valorPermanenteMensal = configs
+			.filter(
+				(c) =>
+					String(c.permanente ?? "N").trim() === "S" &&
+					(TIPCOB_MULT[String(c.tipcob ?? "M").trim()] ?? 1) === 1,
+			)
+			.reduce((s, c) => s + Number(c.valor ?? 0), 0);
+		// Permanentes não-mensais: cobram apenas no mês do ciclo baseado em datainicio_
+		// Usa taxas reais do próximo mês se disponíveis; caso contrário calcula teoricamente
+		// Mapa seq → tipcob para identificar se a taxa é de um permanente não-mensal
+		const seqToTipcob = new Map<number, string>();
+		for (const c of configs) {
+			if (String(c.permanente ?? "N").trim() === "S") {
+				seqToTipcob.set(
+					parseInt(String(c.seq ?? "0"), 10),
+					String(c.tipcob ?? "M").trim(),
+				);
+			}
+		}
+		// Apenas taxas de permanentes não-mensais no próximo mês (via codlan → seq → tipcob)
+		const taxasProxMes5 = tipo5All.filter((r) => {
+			const d = toDate(r.emissao_);
+			if (!d || d < proxMesInicio || d > proxMesFim) return false;
+			const cl = String(r.codlan ?? "").trim();
+			if (cl === "") return false; // sem codlan: dado legado, pula
+			const tipcobTaxa = seqToTipcob.get(parseInt(cl, 10));
+			return (TIPCOB_MULT[tipcobTaxa ?? "M"] ?? 1) > 1; // só não-mensais
+		});
+		const valorPermanenteNaoMensalProxMes =
+			taxasProxMes5.length > 0
+				? taxasProxMes5.reduce((s, r) => s + Number(r.valor ?? 0), 0)
+				: configs
+						.filter((c) => {
+							const isPerm =
+								String(c.permanente ?? "N").trim() === "S";
+							const mult =
+								TIPCOB_MULT[
+									String(c.tipcob ?? "M").trim()
+								] ?? 1;
+							return isPerm && mult > 1;
+						})
+						.reduce((s, c) => {
+							const tipcob = String(c.tipcob ?? "M").trim();
+							const mult = TIPCOB_MULT[tipcob] ?? 1;
+							const datainicio = toDate(c.datainicio_);
+							if (!datainicio) return s;
+							const diffMeses =
+								(proxMesInicio.getFullYear() -
+									datainicio.getFullYear()) *
+									12 +
+								(proxMesInicio.getMonth() -
+									datainicio.getMonth());
+							if (diffMeses >= 0 && diffMeses % mult === 0) {
+								return s + Number(c.valor ?? 0) * mult;
+							}
+							return s;
+						}, 0);
+		const valorProximoMes59 =
+			valorProxMes9 + valorPermanenteMensal + valorPermanenteNaoMensalProxMes;
+
+		type PrevisaoProdutos =
+			| { tipo: "sem_dados" }
+			| { tipo: "cobrado_mes"; total: number }
+			| {
+					tipo: "pendente";
+					qtd: number;
+					totalAberto: number;
+					vencidas: number;
+					valorVencido: number;
+					diasRestantes: number;
+			  }
+			| {
+					tipo: "previsao";
+					data: Date;
+					diasRestantes: number;
+					valor: number;
+			  };
+
+		let previsaoProdutos: PrevisaoProdutos = { tipo: "sem_dados" };
+
+		if (taxas59.length > 0) {
+			if (abertas59Mes.length > 0) {
+				const proxVenc = abertas59Mes
+					.map((r) => toDate(r.emissao_))
+					.filter((d): d is Date => d !== null)
+					.sort((a, b) => a.getTime() - b.getTime())[0];
+				const dias = proxVenc
+					? Math.ceil(
+							(proxVenc.getTime() - hoje.getTime()) / 86400000,
+						)
+					: 0;
+				previsaoProdutos = {
+					tipo: "pendente",
+					qtd: abertas59Mes.length,
+					totalAberto: valorAberto59Mes,
+					vencidas: vencidas59Mes.length,
+					valorVencido: valorVencido59Mes,
+					diasRestantes: dias,
+				};
+			} else if (pagas59Mes.length > 0 && abertas59Mes.length === 0) {
+				previsaoProdutos = {
+					tipo: "cobrado_mes",
+					total: valorPago59Mes,
+				};
+			} else if (proximaFutura) {
+				const dias = Math.ceil(
+					(proximaFutura.d.getTime() - hoje.getTime()) / 86400000,
+				);
+				previsaoProdutos = {
+					tipo: "previsao",
+					data: proximaFutura.d,
+					diasRestantes: dias,
+					valor: Number(proximaFutura.r.valor ?? 0),
+				};
+			}
+		}
+
+		return {
+			items,
+			adendosAtivos: adendosAtivos.length,
+			totalAberto,
+			totalPago,
+			totalVencido59,
+			valorPago59Mes,
+			valorAberto59Mes,
+			totalCobrado59Mes,
+			valorVencido59Mes,
+			valorProximoMes59,
+			valorPermanenteMensal,
+			previsaoProdutos,
+			hasData: items.length > 0 || taxas59.length > 0,
+		};
+	}, [form.codigo, adencobTable, adendosTable, taxasTable, pradendoTable]);
+
+	// Tipo 1 (adesao/carne) taxas — determines if Adesao card is shown and if it's opaque
+	const adesaoInfo = useMemo(() => {
+		const codigoPad = String(form.codigo ?? "").trim().padStart(9, "0");
+		const hoje = new Date();
+		const toDate = (v: unknown): Date | null => {
+			if (v instanceof Date) return v;
+			if (typeof v === "string" && v.trim()) {
+				const d = new Date(v);
+				return isNaN(d.getTime()) ? null : d;
+			}
+			return null;
+		};
+		const taxas1 = (taxasTable?.records ?? []).filter(
+			(r) =>
+				!r._deleted &&
+				String(r.codigo ?? "").trim().padStart(9, "0") === codigoPad &&
+				String(r.tipo ?? "").trim() === "1",
+		);
+		const isMesCorrente = (d: Date) =>
+			d.getFullYear() === hoje.getFullYear() &&
+			d.getMonth() === hoje.getMonth();
+		const isProximoMes = (d: Date) => {
+			const pm = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+			return d.getFullYear() === pm.getFullYear() && d.getMonth() === pm.getMonth();
+		};
+		const mesCorrentes = taxas1.filter((r) => {
+			const d = toDate(r.emissao_);
+			return d && isMesCorrente(d);
+		});
+		const proximoMes = taxas1.filter((r) => {
+			const d = toDate(r.emissao_);
+			return d && isProximoMes(d);
+		});
+		const proximoMesAberto = proximoMes.filter(
+			(r) => String(r.stat ?? "").trim() === "A",
+		);
+		const show = taxas1.length > 0;
+		const opaque = show && mesCorrentes.length === 0 && proximoMesAberto.length > 0;
+		const nextMonthDates = proximoMesAberto
+			.map((r) => toDate(r.emissao_))
+			.filter((d): d is Date => d !== null)
+			.sort((a, b) => a.getTime() - b.getTime());
+		const nextMonthDate = opaque ? (nextMonthDates[0] ?? null) : null;
+		const proxMesTotal = proximoMesAberto.reduce((s, r) => s + Number(r.valor ?? 0), 0);
+		const proxMesQtd = proximoMesAberto.length;
+		const mesCorrenteTotal = mesCorrentes.reduce((s, r) => s + Number(r.valor ?? 0), 0);
+		const mesCorrenteAberto = mesCorrentes.some((r) => String(r.stat ?? '').trim() === 'A');
+		const mesCorrenteQtd = mesCorrentes.length;
+		// Progresso geral das parcelas tipo 1
+		const totalTaxas1 = taxas1.length;
+		const taxas1Pagas = taxas1.filter((r) => String(r.stat ?? '').trim() !== 'A').length;
+		const vlPorParcela1 = taxas1.length > 0 ? Number(taxas1[0]?.valor ?? 0) : 0;
+
+		// Cobranças abertas: mês corrente + vencidas (para saldo devedor)
+		const mesCorrenteAbertoTotal = mesCorrentes
+			.filter((r) => String(r.stat ?? '').trim() === 'A')
+			.reduce((s, r) => s + Number(r.valor ?? 0), 0);
+		// Vencidas = emissao_ < hoje (independente do mês), stat aberto
+		const vencidoAbertoTotal = taxas1
+			.filter((r) => {
+				const d = toDate(r.emissao_);
+				return d && d < hoje && String(r.stat ?? '').trim() === 'A';
+			})
+			.reduce((s, r) => s + Number(r.valor ?? 0), 0);
+
+		// Próximo mês estimado: se não há TAXAS pré-gerado mas ainda restam parcelas
+		const taxas1Restantes = taxas1Pagas < totalTaxas1 ? totalTaxas1 - taxas1Pagas : 0;
+		const proxMesEstimado = proxMesTotal === 0 && taxas1Restantes > 1 ? vlPorParcela1 : 0;
+
+		return { show, opaque, nextMonthDate, proxMesTotal, proxMesQtd, mesCorrenteTotal, mesCorrenteAberto, mesCorrenteQtd, totalTaxas1, taxas1Pagas, vlPorParcela1, mesCorrenteAbertoTotal, vencidoAbertoTotal, proxMesEstimado };
+	}, [form.codigo, taxasTable]);
+
+	// Exported types are derived from the return values of these useMemos
+	// (see FichaDataType and ProdutosDataType exports below the component)
 
 	if (!fichaData) {
 		return (
@@ -484,6 +978,13 @@ export function FichaFinanceira({
 			</div>
 		);
 	}
+
+	// adesaoNrParc === -1 significa que o usuário removeu o card manualmente
+	// Em include: só mostra adesão se categoria foi explicitamente definida (não via fallback do grupo)
+	const showAdesao =
+		mode === "include"
+			? fichaData.vljoia > 0 && adesaoNrParc !== -1 && !fichaData.usouFallback
+			: adesaoInfo.show;
 
 	return (
 		<div className="flex flex-col gap-4 tab-content w-full">
@@ -513,602 +1014,206 @@ export function FichaFinanceira({
 				</div>
 			)}
 
-			{/* Parâmetros + Identificação — card unificado */}
-			<div className="rounded-lg border border-gray-200 overflow-hidden text-xs">
-				{/* Linha 1: campos editáveis */}
-				<div className="grid grid-cols-3 divide-x divide-gray-100">
-					{/* Grupo */}
-					<div
-						className="flex flex-col px-3 py-1 gap-0.5 cursor-pointer"
-						onClick={() => !readOnly && setEditingGrupo(true)}
-					>
-						<span className="text-[10px] text-gray-400">Grupo</span>
-						{editingGrupo && !readOnly ? (
-							<select
-								autoFocus
-								className="text-xs border border-blue-300 rounded px-1 py-0.5 bg-white text-gray-800 w-full"
-								value={form.grupo ?? ""}
-								onChange={(e) => {
-									setField("grupo", e.target.value);
-									setEditingGrupo(false);
-								}}
-								onBlur={() => setEditingGrupo(false)}
-							>
-								{grupoOpts.map((o) => (
-									<option key={o.value} value={o.value}>
-										{o.label}
-									</option>
-								))}
-							</select>
-						) : (
-							<span
-								className="font-medium text-gray-800 truncate"
-								title={
-									grupoOpts.find(
-										(o) => o.value === form.grupo,
-									)?.label
-								}
-							>
-								{grupoOpts.find((o) => o.value === form.grupo)
-									?.label ||
-									form.grupo ||
-									"—"}
-							</span>
-						)}
-					</div>
-
-					{/* Categoria */}
-					<div
-						className="flex flex-col px-3 py-1 gap-0.5 cursor-pointer"
-						onClick={() =>
-							!readOnly &&
-							!editingCategoria &&
-							setEditingCategoria(true)
-						}
-					>
-						<span className="text-[10px] text-gray-400">
-							Categoria
-						</span>
-						{editingCategoria && !readOnly ? (
-							<div
-								className="flex items-center gap-1"
-								onClick={(e) => e.stopPropagation()}
-							>
-								<select
-									autoFocus
-									className="flex-1 text-xs border border-blue-300 rounded px-1 py-0.5 bg-white text-gray-800"
-									value={form.tipcont ?? ""}
-									onChange={(e) => {
-										setField("tipcont", e.target.value);
-										setEditingCategoria(false);
-									}}
-									onBlur={() => setEditingCategoria(false)}
-								>
-									{categoriaOpts.map((o) => (
-										<option key={o.value} value={o.value}>
-											{o.label}
-										</option>
-									))}
-								</select>
-								{form.tipcont && (
-									<button
-										type="button"
-										onMouseDown={() => {
-											setField("tipcont", "");
-											setEditingCategoria(false);
-										}}
-										className="text-gray-400 hover:text-red-500 px-1 shrink-0"
-									>
-										&times;
-									</button>
-								)}
-							</div>
-						) : (
-							<div className="flex items-center gap-1 min-w-0">
-								<span
-									className="font-medium text-gray-800 truncate"
-									title={
-										categoriaOpts.find(
-											(o) => o.value === form.tipcont,
-										)?.label
-									}
-								>
-									{categoriaOpts.find(
-										(o) => o.value === form.tipcont,
-									)?.label ||
-										form.tipcont || (
-											<span className="text-gray-400 italic font-normal">
-												Sem categoria
-											</span>
-										)}
-								</span>
-								{!readOnly && form.tipcont && (
-									<button
-										type="button"
-										onClick={(e) => {
-											e.stopPropagation();
-											setField("tipcont", "");
-										}}
-										className="text-gray-300 hover:text-red-500 leading-none shrink-0"
-									>
-										&times;
-									</button>
-								)}
-							</div>
-						)}
-					</div>
-
-					{/* Tipo Carné */}
-					<div
-						className="flex flex-col px-3 py-1 gap-0.5 cursor-pointer"
-						onClick={() => !readOnly && setEditingCarne(true)}
-					>
-						<span className="text-[10px] text-gray-400">
-							Tipo Carné
-						</span>
-						<div className="flex items-center gap-1 min-w-0">
-							<span
-								className="font-medium text-gray-800 truncate"
-								title={
-									fichaData.carne
-										? `${fichaData.carne.tip} — ${formatCurrency(fichaData.carne.vali)} · ${fichaData.carne.parf}×`
-										: undefined
-								}
-							>
-								{fichaData.carne ? (
-									`${fichaData.carne.tip} · ${formatCurrency(fichaData.carne.vlPorParcela)}/parc.`
-								) : (
-									<span className="text-gray-400 italic font-normal">
-										Sem carné
-									</span>
-								)}
-							</span>
-							{!readOnly && form.vlcarne && (
-								<button
-									type="button"
-									onClick={(e) => {
-										e.stopPropagation();
-										setField("vlcarne", "");
-									}}
-									className="text-gray-300 hover:text-red-500 leading-none shrink-0"
-								>
-									&times;
-								</button>
-							)}
-						</div>
-					</div>
-				</div>
-
-				{/* Linha 2: informações derivadas */}
-				<div className="grid grid-cols-4 divide-x divide-gray-100 border-t border-gray-100 bg-gray-50/50">
-					{(
-						[
-							[
-								"Últ. Circular",
-								fichaData.ultimaCirc
-									? `#${fichaData.ultimaCirc.circ}`
-									: "—",
-							],
-							[
-								"Tipo",
-								fichaData.prior === "S" ? "VIP" : "Padrão",
-							],
-							[
-								"Periodicidade",
-								fichaData.mforma === 1
-									? "Mensal"
-									: fichaData.mforma === 2
-										? "Bimestral"
-										: fichaData.mforma === 3
-											? "Trimestral"
-											: fichaData.mforma === 6
-												? "Semestral"
-												: fichaData.mforma === 12
-													? "Anual"
-													: `${fichaData.mforma} meses`,
-							],
-							["Dependentes", String(fichaData.nrdepend)],
-						] as [string, string][]
-					).map(([label, value]) => (
-						<div key={label} className="flex flex-col px-3 py-1">
-							<span className="text-[10px] text-gray-400">
-								{label}
-							</span>
-							<span
-								className="font-medium text-gray-700 truncate"
-								title={value}
-							>
-								{value}
-							</span>
-						</div>
-					))}
-				</div>
-			</div>
-
-			{/* Modal de seleção de carnê */}
-			{editingCarne && !readOnly && (
-				<TcarnesInput
-					value={String(form.vlcarne ?? "")}
-					isOpen={editingCarne}
-					onOpenChange={(v) => setEditingCarne(v)}
-					onSelect={(tip) => {
-						setField("vlcarne", tip);
-						setEditingCarne(false);
-					}}
+			{/* 2 ou 3 colunas dependendo se há adesão no mês */}
+			<div className={`grid ${showAdesao ? "grid-cols-3" : "grid-cols-2"} gap-2 items-start`}>
+				{showAdesao && (
+					<Adesao
+						mode={mode}
+						vljoia={fichaData.vljoia}
+						nrparc={adesaoNrParc}
+						setNrparc={setAdesaoNrParc}
+						totalParcelas={adesaoInfo.totalTaxas1}
+						parcelasPagas={adesaoInfo.taxas1Pagas}
+						vlPorParcelaDisplay={adesaoInfo.vlPorParcela1}
+						mesCorrenteTotal={adesaoInfo.mesCorrenteTotal}
+						mesCorrenteAberto={adesaoInfo.mesCorrenteAberto}
+						mesCorrenteQtd={adesaoInfo.mesCorrenteQtd}
+						proxMesTotal={adesaoInfo.proxMesTotal}
+						proxMesQtd={adesaoInfo.proxMesQtd}
+						proxMesDate={adesaoInfo.nextMonthDate}
+						opaque={adesaoInfo.opaque}
+					dataInicio={adesaoDataInicio}
+					onDataInicioChange={setAdesaoDataInicio}
+					diapgto={Number(form.diapgto ?? 1)}
+					/>
+				)}
+				<Mensalidade
+					fichaData={fichaData}
+					form={form}
+					setField={setField}
+					readOnly={readOnly}
+					primary={primary}
+					grupoOpts={grupoOpts}
+					categoriaOpts={categoriaOpts}
 				/>
-			)}
 
-			{/* Row 2: 2 colunas — valores */}
-			<div className="grid grid-cols-2 gap-2 items-start">
-				{/* Col 1: Mensalidade */}
-				<div className="rounded-lg border border-gray-200 overflow-hidden h-full flex flex-col">
-					<div className="px-3 py-1.5 bg-gray-50 border-b border-gray-200">
-						<div className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-							{fichaData.prior === "S"
-								? "Mensalidade VIP"
-								: "Mensalidade / Circular"}
-						</div>
-						<div className="text-[10px] text-gray-400">
-							CIRCULAR + CLASSES
-						</div>
-					</div>
-					<div className="divide-y divide-gray-100 flex-1">
-						<div className="flex justify-between items-start px-3 py-1 text-xs gap-2">
-							<div>
-								<div className="font-medium text-gray-800">
-									Valor Circular
-								</div>
-								<div className="text-gray-400">
-									{fichaData.ultimaCirc
-										? `#${fichaData.ultimaCirc.circ} · CIRCULAR.valor`
-										: "sem circular"}
-								</div>
-							</div>
-							<div className="font-mono font-medium text-gray-700 shrink-0">
-								{formatCurrency(fichaData.rvlaux)}
-							</div>
-						</div>
-						<div className="flex justify-between items-start px-3 py-1 text-xs gap-2">
-							<div>
-								<div className="font-medium text-gray-800">
-									Mensalidade Base
-								</div>
-								<div className="text-gray-400">
-									{fichaData.usouFallback
-										? "Grupo"
-										: `Cat. ${fichaData.classeEfetiva}`}{" "}
-									· CLASSES.vlmensal
-									{fichaData.vlmensal < 0 ? " · desc." : ""}
-								</div>
-							</div>
-							<div
-								className={`font-mono font-medium shrink-0 ${fichaData.vlmensal < 0 ? "text-red-600" : "text-gray-700"}`}
-							>
-								{formatCurrency(fichaData.vlmensal)}
-							</div>
-						</div>
-						{fichaData.nrdepend > 0 && (
-							<div className="flex justify-between items-start px-3 py-1 text-xs gap-2">
-								<div>
-									<div className="font-medium text-gray-800">
-										Dependentes
-									</div>
-									<div className="text-gray-400">
-										{fichaData.nrdepend} ×{" "}
-										{formatCurrency(fichaData.vldepend)} ·
-										CLASSES.vldepend
-									</div>
-								</div>
-								<div className="font-mono font-medium text-gray-700 shrink-0">
-									{formatCurrency(
-										fichaData.nrdepend * fichaData.vldepend,
-									)}
-								</div>
-							</div>
-						)}
-						{fichaData.prior === "S" && fichaData.mforma > 1 && (
-							<div className="flex justify-between items-center px-3 py-1 text-[10px] bg-gray-50/60 text-gray-500 gap-2">
-								<span>
-									Base × {fichaData.mforma} (VIP ·
-									GRUPOS.formapgto
-									{fichaData.mgrupvipUsado
-										? ` · circ. grupo ${fichaData.mgrupvipUsado}`
-										: ""}
-									)
-								</span>
-								<span className="font-mono shrink-0">
-									{formatCurrency(fichaData.baseMensal)} ×{" "}
-									{fichaData.mforma}
-								</span>
-							</div>
-						)}
-					</div>
-					<div className="flex justify-between items-center px-3 py-1.5 bg-blue-50 border-t border-blue-100">
-						<div className="text-xs font-semibold text-blue-900">
-							{fichaData.prior === "S"
-								? `Total p/ período`
-								: "Total p/ circular"}
-						</div>
-						<div className="font-mono font-bold text-blue-900 text-sm">
-							{formatCurrency(fichaData.valorMensalidade)}
-						</div>
-					</div>
-				</div>
-
-				{/* Col 2: Carné de venda */}
-				<div className="rounded-lg border border-gray-200 overflow-hidden h-full flex flex-col">
-					<div className="px-3 py-1.5 bg-gray-50 border-b border-gray-200">
-						<div className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-							Carné / Joia
-						</div>
-						<div className="text-[10px] text-gray-400">
-							TCARNES via vlcarne
-						</div>
-					</div>
-					{!fichaData.carne ? (
-						<div className="px-3 py-2 text-xs text-gray-400 italic flex-1">
-							Nenhum carné vinculado
-						</div>
-					) : (
-						<>
-							<div className="divide-y divide-gray-100 flex-1">
-								<div className="flex justify-between items-start px-3 py-1 text-xs gap-2">
-									<div>
-										<div className="font-medium text-gray-800">
-											Total da Joia
-										</div>
-										<div className="text-gray-400">
-											TCARNES.vali · tipo{" "}
-											{fichaData.carne.tip}
-										</div>
-									</div>
-									<div className="font-mono font-medium text-gray-700 shrink-0">
-										{formatCurrency(fichaData.carne.vali)}
-									</div>
-								</div>
-								<div className="flex justify-between items-start px-3 py-1 text-xs gap-2">
-									<div>
-										<div className="font-medium text-gray-800">
-											Parcelas
-										</div>
-										<div className="text-gray-400">
-											TCARNES.parf
-										</div>
-									</div>
-									<div className="font-mono font-medium text-gray-700 shrink-0">
-										{fichaData.carne.parf}×
-									</div>
-								</div>
-							</div>
-							<div className="flex justify-between items-center px-3 py-1.5 bg-blue-50 border-t border-blue-100">
-								<div className="text-xs font-semibold text-blue-900">
-									Valor / Parcela
-								</div>
-								<div className="font-mono font-bold text-blue-900 text-sm">
-									{formatCurrency(
-										fichaData.carne.vlPorParcela,
-									)}
-								</div>
-							</div>
-						</>
-					)}
-				</div>
+				<ProdutosServicos
+					produtosData={produtosData}
+					primary={primary}
+				/>
 			</div>
 
-			{/* Total estimado */}
-			<div
-				className="flex flex-col px-3 py-2 rounded-lg shadow-sm gap-1 -mt-2"
-				style={{ backgroundColor: primaryLight }}
-			>
-				{/* Já cobrado — fica acima do título */}
-				{fichaData.previsao.tipo === "cobrado_mes" && (
-					<div className="flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
-						<span>&#10003;</span>
-						<span>
-							Já cobrado neste mês —{" "}
-							{formatCurrency(fichaData.previsao.total)}
-						</span>
-					</div>
-				)}
-
-				<div className="text-base font-semibold text-gray-700">
-					Estimativas *
-				</div>
-
-				{/* Outros status */}
-				{fichaData.previsao.tipo === "inativo" && (
-					<div className="text-xs text-gray-400 italic">
-						Contrato inativo — sem cobranças previstas.
-					</div>
-				)}
-				{fichaData.previsao.tipo === "remido" && (
-					<div className="text-xs text-gray-400 italic">
-						Contrato remido — isento de taxa.
-					</div>
-				)}
-				{fichaData.previsao.tipo === "pendente" &&
-					fichaData.previsao.qtdAntigos > 0 &&
-					fichaData.previsao.diasRestantes <= 0 && (
-						<div className="text-[10px] text-red-500">
-							&#9888; Mais {fichaData.previsao.qtdAntigos}{" "}
-							cobrança
-							{fichaData.previsao.qtdAntigos > 1 ? "s" : ""} de
-							meses anteriores em aberto — consultar histórico.
-						</div>
-					)}
-				{fichaData.previsao.tipo === "previsao" && (
-					<div
-						className={`flex items-center gap-1.5 text-xs font-medium rounded px-2 py-1 border ${fichaData.previsao.diasRestantes <= 30 ? "text-blue-700 bg-blue-50 border-blue-200" : "text-gray-600 bg-gray-50 border-gray-200"}`}
-					>
-						<span>&rarr;</span>
-						{fichaData.previsao.diasRestantes <= 30 ? (
-							<span>
-								Próximos 30 dias —{" "}
-								{formatCurrency(fichaData.previsao.valor)}{" "}
-								<span className="font-normal opacity-70">
-									(em ~{fichaData.previsao.diasRestantes} dia
-									{fichaData.previsao.diasRestantes !== 1
-										? "s"
-										: ""}
-									,{" "}
-									{fichaData.previsao.data.toLocaleDateString(
-										"pt-BR",
-										{ day: "2-digit", month: "2-digit" },
-									)}
-									)
-								</span>
-							</span>
-						) : (
-							<span>
-								Próxima cobrança:{" "}
-								{fichaData.previsao.data.toLocaleDateString(
-									"pt-BR",
-									{ month: "long", year: "numeric" },
-								)}{" "}
-								— {formatCurrency(fichaData.previsao.valor)}
-							</span>
-						)}
-					</div>
-				)}
-				{fichaData.previsao.tipo === "sem_historico" && (
-					<div className="text-xs text-gray-400 italic">
-						Sem histórico de cobranças — estimativa teórica abaixo.
-					</div>
-				)}
-				{fichaData.previsao.tipo === "pendente" && (
-					<div className="flex items-center gap-1 text-xs text-amber-700">
-						<span>&#9888;</span>
-						<span>
-							{fichaData.previsao.qtd} cobrança
-							{fichaData.previsao.qtd > 1 ? "s" : ""} de plano em
-							aberto —{" "}
-							<span className="font-mono font-medium">
-								{formatCurrency(
-									fichaData.previsao.totalRecente,
-								)}
-							</span>
-							{fichaData.previsao.diasRestantes > 0
-								? ` · previsão de receber em ${fichaData.previsao.diasRestantes} dia${fichaData.previsao.diasRestantes !== 1 ? "s" : ""}`
-								: fichaData.previsao.diasRestantes < 0
-									? ` · venceu há ${Math.abs(fichaData.previsao.diasRestantes)} dia${Math.abs(fichaData.previsao.diasRestantes) !== 1 ? "s" : ""}`
-									: " · vence hoje"}
-						</span>
-					</div>
-				)}
-				{"extras" in fichaData.previsao &&
-					fichaData.previsao.extras && (
-						<div className="flex items-center gap-1 text-xs text-amber-700">
-							<span>&#9888;</span>
-							<span>
-								{fichaData.previsao.extras.qtd} cobrança
-								{fichaData.previsao.extras.qtd > 1
-									? "s"
-									: ""}{" "}
-								adicional
-								{fichaData.previsao.extras.qtd > 1
-									? "is"
-									: ""}{" "}
-								em aberto —{" "}
-								<span className="font-mono font-medium">
-									{formatCurrency(
-										fichaData.previsao.extras.total,
-									)}
-								</span>
-								{fichaData.previsao.extras.diasRestantes > 0
-									? ` · previsão de receber em ${fichaData.previsao.extras.diasRestantes} dia${fichaData.previsao.extras.diasRestantes !== 1 ? "s" : ""}`
-									: fichaData.previsao.extras.diasRestantes <
-										  0
-										? ` · venceu há ${Math.abs(fichaData.previsao.extras.diasRestantes)} dia${Math.abs(fichaData.previsao.extras.diasRestantes) !== 1 ? "s" : ""}`
-										: " · vence hoje"}
-							</span>
-						</div>
-					)}
-
-				{/* Coluna de valores */}
-				<div className="flex flex-col gap-0.5 text-xs mt-0.5">
-					<div className="flex justify-between items-center">
-						<span className="text-gray-600">Mensalidade</span>
-						<span
-							className="font-mono font-medium"
-							style={{ color: primary }}
-						>
-							{formatCurrency(
-								fichaData.grupoOuCategoriaAlterado
-									? fichaData.origValorMensalidade
-									: fichaData.valorMensalidade,
-							)}
-						</span>
-					</div>
-					{fichaData.paidPlanMes > 0 && (
-						<div className="flex justify-between items-center text-green-700">
-							<span>Plano pago neste mês</span>
-							<span className="font-mono font-medium">
-								&#8722;{formatCurrency(fichaData.paidPlanMes)}
-							</span>
-						</div>
-					)}
-					{fichaData.grupoOuCategoriaAlterado &&
-						fichaData.diferencaMensalidade !== 0 && (
-							<div
-								className={`flex justify-between items-center ${fichaData.diferencaMensalidade > 0 ? "text-orange-600" : "text-green-700"}`}
-							>
-								<span>Diferença (novo grupo/cat.)</span>
-								<span className="font-mono font-medium">
-									{fichaData.diferencaMensalidade > 0
-										? `+${formatCurrency(fichaData.diferencaMensalidade)}`
-										: formatCurrency(
-												fichaData.diferencaMensalidade,
-											)}
-								</span>
-							</div>
-						)}
-					{fichaData.carne && (
-						<div className="flex justify-between items-center">
-							<span className="text-gray-600">Parc. Carné</span>
-							<span
-								className="font-mono font-medium"
-								style={{ color: primary }}
-							>
-								{formatCurrency(fichaData.carne.vlPorParcela)}
-							</span>
-						</div>
-					)}
-					<div className="border-t border-gray-300 my-1" />
-					<div className="flex justify-between items-center">
-						<span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">
-							Saldo Devedor
-						</span>
-						<span
-							className="font-mono font-bold text-base"
-							style={{ color: primary }}
-						>
-							{formatCurrency(
-								(fichaData.totalVencido > 0
-									? fichaData.totalVencido
-									: Math.max(0, fichaData.totalMensal - fichaData.paidPlanMes)
-								) + fichaData.diferencaMensalidade,
-							)}
-						</span>
-					</div>
-					<div className="border-t border-gray-200 my-1" />
-					<div className="flex justify-between items-center text-gray-400">
-						<div>
-							{" "}
-							<div className="text-[10px] text-gray-400">
-								* Baseada na última circular do grupo, categoria
-								e carné vinculado.
-							</div>{" "}
-							<span className="text-[10px] uppercase tracking-wide">
-								Próximo mês
-							</span>
-						</div>
-
-						<span className="font-mono font-semibold text-sm">
-							{formatCurrency(fichaData.totalMensal)}
-						</span>
-					</div>
-				</div>
-			</div>
+			<Estimativas
+				fichaData={fichaData}
+				produtosData={produtosData}
+				primary={primary}
+				primaryLight={primaryLight}
+				mode={mode}
+				adesaoProxMes={
+					mode === "include"
+						? (adesaoNrParc > 0
+							? Math.floor((fichaData.vljoia / adesaoNrParc) * 100) / 100
+							: 0)
+						: (adesaoInfo.proxMesTotal || adesaoInfo.proxMesEstimado)
+				}
+				adesaoVlParcela={
+					mode === "include"
+						? 0
+						: adesaoInfo.vencidoAbertoTotal
+				}
+			/>
 		</div>
 	);
 }
+
+// ─── Exported types for sub-components ───────────────────────────────────────
+
+type _FichaDataHelper = ReturnType<typeof _fichaDataShape>;
+function _fichaDataShape() {
+	return {
+		classeEfetiva: "" as string,
+		descricao: "" as string,
+		vljoia: 0 as number,
+		nrparcClasse: 1 as number,
+		prior: "" as string,
+		vlmensal: 0 as number,
+		vldepend: 0 as number,
+		nrdepend: 0 as number,
+		mforma: 0 as number,
+		rvlaux: 0 as number,
+		ultimaCirc: null as {
+			circ: string;
+			valor: number;
+			grupoUsado: string;
+		} | null,
+		baseMensal: 0 as number,
+		valorMensalidade: 0 as number,
+		valorPeriodico: 0 as number,
+		totalMensal: 0 as number,
+		categoriaEncontrada: false as boolean,
+		usouFallback: false as boolean,
+		admissaoMaior30Dias: false as boolean,
+		previsao: { tipo: "sem_historico" } as
+			| { tipo: "inativo" }
+			| { tipo: "remido" }
+			| {
+					tipo: "pendente";
+					qtd: number;
+					totalRecente: number;
+					qtdAntigos: number;
+					totalAntigos: number;
+					diasRestantes: number;
+					extras?: {
+						qtd: number;
+						total: number;
+						diasRestantes: number;
+					};
+			  }
+			| {
+					tipo: "cobrado_mes";
+					total: number;
+					extras?: {
+						qtd: number;
+						total: number;
+						diasRestantes: number;
+					};
+			  }
+			| {
+					tipo: "previsao";
+					data: Date;
+					diasRestantes: number;
+					valor: number;
+					extras?: {
+						qtd: number;
+						total: number;
+						diasRestantes: number;
+					};
+			  }
+			| {
+					tipo: "sem_historico";
+					extras?: {
+						qtd: number;
+						total: number;
+						diasRestantes: number;
+					};
+			  },
+		paidPlanMes: 0 as number,
+		qtcircs: 0 as number,
+		qtcircpg: 0 as number,
+		mgrupvipUsado: null as string | null,
+		origValorMensalidade: 0 as number,
+		origTotalMensal: 0 as number,
+		grupoOuCategoriaAlterado: false as boolean,
+		diferencaMensalidade: 0 as number,
+		planVencido: 0 as number,
+		extrasVencido: 0 as number,
+	};
+}
+
+export type FichaDataType = _FichaDataHelper;
+
+type _ProdutosDataHelper = ReturnType<typeof _produtosDataShape>;
+function _produtosDataShape() {
+	return {
+		items: [] as {
+			codproduto: string;
+			nome: string;
+			permanente: boolean;
+			tipcob: string;
+			valorConfig: number;
+			valorPeriodo: number;
+			nparcelas: number;
+			datainicio: Date | null;
+			mult: number;
+			totalTaxas: number;
+			pagas: number;
+			valorPago: number;
+			emAberto: number;
+			valorAberto: number;
+			vencidas: number;
+			valorVencido: number;
+			proxima: Date | null;
+			proximaValor: number;
+		}[],
+		adendosAtivos: 0 as number,
+		totalAberto: 0 as number,
+		totalPago: 0 as number,
+		totalVencido59: 0 as number,
+		valorPago59Mes: 0 as number,
+		valorAberto59Mes: 0 as number,
+		totalCobrado59Mes: 0 as number,
+		valorVencido59Mes: 0 as number,
+		valorProximoMes59: 0 as number,
+		valorPermanenteMensal: 0 as number,
+		previsaoProdutos: { tipo: "sem_dados" } as
+			| { tipo: "sem_dados" }
+			| { tipo: "cobrado_mes"; total: number }
+			| {
+					tipo: "pendente";
+					qtd: number;
+					totalAberto: number;
+					vencidas: number;
+					valorVencido: number;
+					diasRestantes: number;
+			  }
+			| {
+					tipo: "previsao";
+					data: Date;
+					diasRestantes: number;
+					valor: number;
+			  },
+		hasData: false as boolean,
+	};
+}
+
+export type ProdutosDataType = _ProdutosDataHelper;

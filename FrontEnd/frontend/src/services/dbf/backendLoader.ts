@@ -16,7 +16,8 @@ const ALL_TABLES = [
   'PRCESSOS', 'EMCARNE',  'TCARNES',  'BOLETOS',  'BXBOLET', 'BXREC',
   'BXFCC',    'BXTXAS',   'CGRUPOS',  'HISTORIC', 'MENSAG',  'JUROS',
   'CSTSEG',   'ALENDER',  'TXENTR',   'TXPROC',   'LBXBOLET','TFILIAIS',
-  'TX2VIA',   'FNCS',     'ATEND800',
+  'TX2VIA',   'FNCS',     'ATEND800',  'ADENCOB',  'CLSINFO',  'CLSITEM',  'ACORDOS',
+  'AFUNER',
 ]
 
 function parseBackendValue(

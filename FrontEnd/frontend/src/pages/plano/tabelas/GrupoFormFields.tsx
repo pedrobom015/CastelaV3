@@ -111,7 +111,7 @@ export function GrupoSecIdentificacao({ form, set, classeOpts = [] }: GrupoSecti
 	return (
 		<FormSection title="Identificação">
 			<FormRow cols={2}>
-				<FormInput label="Grupo" value={form.grup} onChange={(e) => set("grup", e.target.value)} maxLength={2} required disabled />
+				<FormInput label="Grupo" value={form.grup} onChange={(e) => set("grup", e.target.value)} maxLength={4} required disabled />
 				<FormSelect label="Classe" value={form.classe} onChange={(e) => set("classe", e.target.value)} options={classeOpts} />
 			</FormRow>
 			<FormRow cols={2}>

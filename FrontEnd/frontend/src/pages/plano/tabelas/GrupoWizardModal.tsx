@@ -358,7 +358,6 @@ function GrupoModalWizard({
 										}
 										maxLength={2}
 										required
-										disabled
 									/>
 									<FormSelect
 										label="Categoria Padrão"
@@ -589,7 +588,7 @@ function GrupoModalWizard({
 		>
 			<div
 				className="flex flex-row overflow-hidden"
-				style={{ height: "min(82vh, 680px)" }}
+				style={{ height: "min(82vh, 700px)" }}
 			>
 				{/* ── Sidebar ── */}
 				<div className="w-64 shrink-0 bg-white border-r border-slate-100 p-6 flex flex-col gap-2">
@@ -661,7 +660,7 @@ function GrupoModalWizard({
 				</div>
 
 				{/* ── Conteúdo ── */}
-				<div className="flex-1 flex flex-col min-h-0 bg-white">
+				<div className="flex-1 flex flex-col min-h-0 bg-white overflow-auto h-[500px]">
 					<div className="shrink-0 px-8 py-6 border-b border-slate-50 flex items-start justify-between">
 						<div>
 							<h1 className="text-lg font-bold text-slate-800 tracking-tight">

@@ -16,6 +16,11 @@ import {
 	formatCurrency,
 	toDateInputValue,
 } from "../../../utils/formatters";
+import {
+	maskCurrency,
+	parseCurrency,
+	numberToMask,
+} from "../tabelas/CategoriaWizardModal";
 import { writeDbfFile } from "../../../services/dbf/DbfReader";
 import { buildPrintHtml as buildTaxasPrintHtml } from "../../../components/common/PrintTaxasModal";
 import { PrintPreviewModal } from "../../../components/common/PrintPreviewModal";
@@ -446,6 +451,7 @@ export function TaxasPanel({
 	const [selected, setSelected] = useState<DbfRecord | null>(null);
 	const [editOpen, setEditOpen] = useState(false);
 	const [form, setForm] = useState<Taxa | null>(null);
+	const [valorpgStr, setValorpgStr] = useState("");
 	const [saving, setSaving] = useState(false);
 	const [printTypeOpen, setPrintTypeOpen] = useState(false);
 	const [printTypeSel, setPrintTypeSel] = useState<"boleto" | "recibo">(
@@ -676,7 +682,9 @@ export function TaxasPanel({
 			return;
 		}
 		setSelected(row);
-		setForm(row as unknown as Taxa);
+		const taxa = row as unknown as Taxa;
+		setForm(taxa);
+		setValorpgStr(numberToMask(Number(taxa.valorpg ?? 0)));
 		setEditOpen(true);
 	}
 
@@ -905,7 +913,14 @@ export function TaxasPanel({
 										<FormInput
 											label="Data Pagamento"
 											type="date"
-											value={toDateInputValue(form.pgto_)}
+											value={
+												form.pgto_ &&
+												!isNaN(new Date(form.pgto_).getTime())
+													? new Date(form.pgto_)
+															.toISOString()
+															.substring(0, 10)
+													: ""
+											}
 											onChange={(e) =>
 												setField(
 													"pgto_",
@@ -920,25 +935,24 @@ export function TaxasPanel({
 										/>
 										<FormInput
 											label="Valor Pago"
-											value={formatCurrency(
-												Number(form.valorpg ?? 0),
-											)}
+											value={valorpgStr}
 											onChange={(e) => {
-												const raw = e.target.value
-													.replace(/[^\d,]/g, "")
-													.replace(",", ".");
-												setField(
-													"valorpg",
-													parseFloat(raw) || 0,
-												);
+												const masked = maskCurrency(e.target.value);
+												setValorpgStr(masked);
+												setField("valorpg", parseCurrency(masked));
 											}}
 										/>
 										<FormInput
 											label="Data Baixa"
 											type="date"
-											value={toDateInputValue(
-												form.baixa_,
-											)}
+											value={
+												form.baixa_ &&
+												!isNaN(new Date(form.baixa_).getTime())
+													? new Date(form.baixa_)
+															.toISOString()
+															.substring(0, 10)
+													: ""
+											}
 											onChange={(e) =>
 												setField(
 													"baixa_",

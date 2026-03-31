@@ -1,2 +1,12 @@
-# CastelaV3
-Castela V3- gestÃ£o de planos 
+# CastelaV2
+
+Trata-se de um sistema ERP completo para gest?o de contratos com objetivo de ser um sistema que resolve a dor do cliente, n?o s¢ cadastros e tabelas. 
+
+Com ele pretende-se saber, por exemplo: quem pagar  hoje, quem esta inadimplente, resolver o atendimento r pido no momento mais cr¡tico (¢bito), por isso o sistem precisa ser orientado a decis?es.
+
+Logo de in¡cio deve apresentar dashboard com contratos ativos, recebimentos do dia, inadimplencia critica, atendimentos em andamento, isso tudo usando linguagem do cliente (no caso funer ria) como "Fam¡lias protegidas, Vidas protegidas, Atendimentos hoje, Risco financeiro".
+
+antes de continuarmos, preciso desse conte£do todo j  gerado em arquivo markdown pois trabalharei nele para usa-lo como objetivo em todo o desenvolvimento, ou, vocˆ pode criar um arquivo md com as instru‡?es necess rias para auxiliar no uso de IA para desenvolvimento. Descrevendo melhor a situa‡?o atual: tenho 90% das tabelas desenhadas para MySQL, faltando as tabelas referentes … venda dos contratos (distribui‡?o aos vendedores, recebimento dos vendidos, controle das comiss?es e p¢s-venda). Tenho tamb‚m o perfil desejado para o backend, o frontend ainda esta sendo estudado (React Router DOM tradicional para as rotas,Tailwind CSS + Zustand, recharts, e criando componentes reutiliz veis super robustos (um TableGrid dinƒmico e um FormBuilder) ) mas sei que ‚ melhor pegar com vocˆ a defini‡?o mais atualizada, pensando em escalabilidade, facilidade de manuten‡?o, focada n?o em tabelas mas em "jornadas do usu rio". Tamb‚m quero organizar a arquitetura do frontend em torno de "m¢dulos de neg¢cio"  (ex: pastas chamadas /GestaoContratos, /Financeiro, /Atendimento) em vez da estrutura t‚cnica padr?o de pastas.
+
+no stitch:
+Contextualizando: tenho 90% das tabelas desenhadas para MySQL, tenho tamb‚m o perfil desejado para o backend, o frontend ainda esta sendo estudado (React Router DOM tradicional para as rotas,Tailwind CSS + Zustand, recharts, e criando componentes reutiliz veis super robustos (um TableGrid dinƒmico e um FormBuilder) ). Preciso que vocˆ verifique se essa ‚ defini‡?o mais adequada, pensando em escalabilidade, facilidade de manuten‡?o, focada n?o em tabelas mas em "jornadas do usu rio". Tamb‚m quero organizar a arquitetura do frontend em torno de "m¢dulos de neg¢cio"  (ex: pastas chamadas /GestaoContratos, /Financeiro, /Atendimento) em vez da estrutura t‚cnica padr?o de pastas.

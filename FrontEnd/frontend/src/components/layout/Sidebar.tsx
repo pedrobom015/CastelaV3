@@ -385,7 +385,7 @@ export function Sidebar() {
 					className="text-center text-gray-400 mt-1"
 					style={{ fontSize: 10 }}
 				>
-					v1.0.11
+					v1.0.15
 				</span>
 			</div>
 

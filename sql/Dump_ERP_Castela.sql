@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Tempo de geração: 24/03/2026 às 21:11
+-- Tempo de geração: 30/03/2026 às 15:05
 -- Versão do servidor: 9.1.0
 -- Versão do PHP: 8.3.14
 
@@ -174,6 +174,26 @@ DELIMITER ;
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `accessories`
+--
+
+DROP TABLE IF EXISTS `accessories`;
+CREATE TABLE IF NOT EXISTS `accessories` (
+  `accessory_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `quantity_available` int UNSIGNED NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_by` int UNSIGNED DEFAULT NULL,
+  `updated_by` int UNSIGNED DEFAULT NULL,
+  `deleted_by` int UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`accessory_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `account`
 --
 
@@ -234,6 +254,24 @@ CREATE TABLE IF NOT EXISTS `accounting_code` (
   UNIQUE KEY `uk_accounting_code_company` (`company_id`,`code`),
   KEY `idx_accounting_code_company` (`company_id`),
   KEY `idx_accounting_code_type` (`account_type_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `account_activation`
+--
+
+DROP TABLE IF EXISTS `account_activation`;
+CREATE TABLE IF NOT EXISTS `account_activation` (
+  `account_activation_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `sys_user_id` int UNSIGNED NOT NULL,
+  `activation_code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`account_activation_id`),
+  UNIQUE KEY `activation_code_2` (`activation_code`),
+  KEY `activation_code` (`activation_code`),
+  KEY `fk_aa_user` (`sys_user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -437,6 +475,56 @@ CREATE TABLE IF NOT EXISTS `age_addendum` (
   KEY `idx_age_addendum_user` (`sys_user_id`),
   KEY `idx_age_addendum_addendum` (`addendum_id`),
   KEY `idx_age_addendum_class` (`class_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `announcements`
+--
+
+DROP TABLE IF EXISTS `announcements`;
+CREATE TABLE IF NOT EXISTS `announcements` (
+  `announcement_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `announcement_text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `priority` int DEFAULT NULL,
+  `start_date` datetime DEFAULT NULL,
+  `end_date` datetime DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_by` int UNSIGNED DEFAULT NULL,
+  `updated_by` int UNSIGNED DEFAULT NULL,
+  `deleted_by` int UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`announcement_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `announcement_groups`
+--
+
+DROP TABLE IF EXISTS `announcement_groups`;
+CREATE TABLE IF NOT EXISTS `announcement_groups` (
+  `announcement_id` int UNSIGNED NOT NULL,
+  `group_id` int UNSIGNED NOT NULL,
+  PRIMARY KEY (`announcement_id`,`group_id`),
+  KEY `group_id` (`group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `announcement_resources`
+--
+
+DROP TABLE IF EXISTS `announcement_resources`;
+CREATE TABLE IF NOT EXISTS `announcement_resources` (
+  `announcement_id` int UNSIGNED NOT NULL,
+  `resource_id` int UNSIGNED NOT NULL,
+  PRIMARY KEY (`announcement_id`,`resource_id`),
+  KEY `resource_id` (`resource_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -928,6 +1016,58 @@ CREATE TABLE IF NOT EXISTS `billing_rule_application` (
   KEY `idx_billing_rule_app_entity` (`entity_type`,`entity_id`),
   KEY `fk_billing_rule_app_unit` (`sys_unit_id`),
   KEY `fk_billing_rule_app_user` (`sys_user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `blackout_instances`
+--
+
+DROP TABLE IF EXISTS `blackout_instances`;
+CREATE TABLE IF NOT EXISTS `blackout_instances` (
+  `blackout_instance_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `start_date` datetime NOT NULL,
+  `end_date` datetime NOT NULL,
+  `blackout_series_id` int UNSIGNED NOT NULL,
+  PRIMARY KEY (`blackout_instance_id`),
+  KEY `start_date` (`start_date`),
+  KEY `end_date` (`end_date`),
+  KEY `blackout_series_id` (`blackout_series_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `blackout_series`
+--
+
+DROP TABLE IF EXISTS `blackout_series`;
+CREATE TABLE IF NOT EXISTS `blackout_series` (
+  `blackout_series_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `title` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `owner_id` int UNSIGNED NOT NULL,
+  `created_by` int UNSIGNED DEFAULT NULL,
+  `updated_by` int UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`blackout_series_id`),
+  KEY `owner_id` (`owner_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `blackout_series_resources`
+--
+
+DROP TABLE IF EXISTS `blackout_series_resources`;
+CREATE TABLE IF NOT EXISTS `blackout_series_resources` (
+  `blackout_series_id` int UNSIGNED NOT NULL,
+  `resource_id` int UNSIGNED NOT NULL,
+  PRIMARY KEY (`blackout_series_id`,`resource_id`),
+  KEY `resource_id` (`resource_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1823,6 +1963,24 @@ CREATE TABLE IF NOT EXISTS `cost_center` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `credit_log`
+--
+
+DROP TABLE IF EXISTS `credit_log`;
+CREATE TABLE IF NOT EXISTS `credit_log` (
+  `credit_log_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `sys_user_id` int UNSIGNED NOT NULL,
+  `credit_amount` decimal(10,2) NOT NULL,
+  `credit_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reference_id` int UNSIGNED DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`credit_log_id`),
+  KEY `sys_user_id` (`sys_user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `currency`
 --
 
@@ -1963,6 +2121,98 @@ CREATE TABLE IF NOT EXISTS `customer_return_item` (
   KEY `idx_cri_variation` (`variation_id`),
   KEY `idx_cri_uom` (`uom_id`),
   KEY `idx_cri_location` (`location_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `custom_attributes`
+--
+
+DROP TABLE IF EXISTS `custom_attributes`;
+CREATE TABLE IF NOT EXISTS `custom_attributes` (
+  `attribute_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `required` tinyint UNSIGNED NOT NULL DEFAULT '0',
+  `possible_values` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `sort_order` int UNSIGNED DEFAULT '0',
+  `category` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `regex_validation` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_private` tinyint UNSIGNED DEFAULT '0',
+  `is_multi` tinyint UNSIGNED DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_by` int UNSIGNED DEFAULT NULL,
+  `updated_by` int UNSIGNED DEFAULT NULL,
+  `deleted_by` int UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`attribute_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `custom_attribute_entities`
+--
+
+DROP TABLE IF EXISTS `custom_attribute_entities`;
+CREATE TABLE IF NOT EXISTS `custom_attribute_entities` (
+  `attribute_id` int UNSIGNED NOT NULL,
+  `entity_id` int UNSIGNED NOT NULL,
+  PRIMARY KEY (`attribute_id`,`entity_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `custom_attribute_values`
+--
+
+DROP TABLE IF EXISTS `custom_attribute_values`;
+CREATE TABLE IF NOT EXISTS `custom_attribute_values` (
+  `attribute_id` int UNSIGNED NOT NULL,
+  `entity_id` int UNSIGNED NOT NULL,
+  `entity_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (`attribute_id`,`entity_id`,`entity_type`),
+  KEY `entity_id` (`entity_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `custom_time_blocks`
+--
+
+DROP TABLE IF EXISTS `custom_time_blocks`;
+CREATE TABLE IF NOT EXISTS `custom_time_blocks` (
+  `custom_block_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `schedule_id` int UNSIGNED NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `day_of_week` tinyint UNSIGNED DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  `all_day` tinyint UNSIGNED NOT NULL DEFAULT '0',
+  PRIMARY KEY (`custom_block_id`),
+  KEY `schedule_id` (`schedule_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `dbversion`
+--
+
+DROP TABLE IF EXISTS `dbversion`;
+CREATE TABLE IF NOT EXISTS `dbversion` (
+  `version_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `major` int UNSIGNED NOT NULL,
+  `minor` int UNSIGNED NOT NULL,
+  `revision` int UNSIGNED NOT NULL,
+  `build` int UNSIGNED NOT NULL,
+  `completed` datetime NOT NULL,
+  PRIMARY KEY (`version_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -2387,7 +2637,7 @@ CREATE TABLE IF NOT EXISTS `expense_type` (
   `deleted_by` int UNSIGNED DEFAULT NULL,
   PRIMARY KEY (`expense_type_id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Despejando dados para a tabela `expense_type`
@@ -2664,6 +2914,21 @@ CREATE TABLE IF NOT EXISTS `group_batch` (
   KEY `idx_group_batch_unit` (`sys_unit_id`),
   KEY `idx_group_batch_user` (`sys_user_id`),
   KEY `idx_group_batch_class` (`class_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `group_resource_permissions`
+--
+
+DROP TABLE IF EXISTS `group_resource_permissions`;
+CREATE TABLE IF NOT EXISTS `group_resource_permissions` (
+  `sys_group_id` int UNSIGNED NOT NULL,
+  `resource_id` int UNSIGNED NOT NULL,
+  PRIMARY KEY (`sys_group_id`,`resource_id`),
+  KEY `sys_group_id` (`sys_group_id`),
+  KEY `resource_id` (`resource_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -2977,6 +3242,25 @@ CREATE TABLE IF NOT EXISTS `journal_type` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `layouts`
+--
+
+DROP TABLE IF EXISTS `layouts`;
+CREATE TABLE IF NOT EXISTS `layouts` (
+  `layout_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `timezone` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'America/Sao_Paulo',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_by` int UNSIGNED DEFAULT NULL,
+  `updated_by` int UNSIGNED DEFAULT NULL,
+  `deleted_by` int UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`layout_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `log_event_type`
 --
 
@@ -2995,7 +3279,7 @@ CREATE TABLE IF NOT EXISTS `log_event_type` (
   `deleted_by` int UNSIGNED DEFAULT NULL,
   PRIMARY KEY (`log_event_type_id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Despejando dados para a tabela `log_event_type`
@@ -3090,7 +3374,7 @@ CREATE TABLE IF NOT EXISTS `maintenance_status` (
   `deleted_by` int UNSIGNED DEFAULT NULL,
   PRIMARY KEY (`maintenance_status_id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Despejando dados para a tabela `maintenance_status`
@@ -3352,6 +3636,39 @@ CREATE TABLE IF NOT EXISTS `partner_type` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `payment_configuration`
+--
+
+DROP TABLE IF EXISTS `payment_configuration`;
+CREATE TABLE IF NOT EXISTS `payment_configuration` (
+  `payment_configuration_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `is_enabled` tinyint UNSIGNED NOT NULL DEFAULT '0',
+  `payment_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `currency` varchar(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'BRL',
+  `tax_id` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`payment_configuration_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `payment_gateway_settings`
+--
+
+DROP TABLE IF EXISTS `payment_gateway_settings`;
+CREATE TABLE IF NOT EXISTS `payment_gateway_settings` (
+  `payment_gateway_setting_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `gateway_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `setting_key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `setting_value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `is_encrypted` tinyint UNSIGNED DEFAULT '0',
+  PRIMARY KEY (`payment_gateway_setting_id`),
+  UNIQUE KEY `gateway_type` (`gateway_type`,`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `payment_method`
 --
 
@@ -3532,6 +3849,48 @@ CREATE TABLE IF NOT EXISTS `payment_transaction` (
   KEY `idx_transaction_installment` (`installment_id`),
   KEY `fk_transaction_unit` (`sys_unit_id`),
   KEY `fk_transaction_user` (`sys_user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `payment_transaction_log`
+--
+
+DROP TABLE IF EXISTS `payment_transaction_log`;
+CREATE TABLE IF NOT EXISTS `payment_transaction_log` (
+  `payment_transaction_log_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `transaction_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `series_id` int UNSIGNED NOT NULL,
+  `transaction_date` datetime NOT NULL,
+  `transaction_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `transaction_status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `amount` decimal(10,2) DEFAULT NULL,
+  `currency` varchar(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `gateway_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `gateway_transaction_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `raw_response` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (`payment_transaction_log_id`),
+  UNIQUE KEY `transaction_id` (`transaction_id`),
+  KEY `series_id` (`series_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `peak_times`
+--
+
+DROP TABLE IF EXISTS `peak_times`;
+CREATE TABLE IF NOT EXISTS `peak_times` (
+  `peak_time_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `schedule_id` int UNSIGNED NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `day_of_week` tinyint UNSIGNED DEFAULT NULL,
+  `all_day` tinyint UNSIGNED NOT NULL DEFAULT '0',
+  PRIMARY KEY (`peak_time_id`),
+  KEY `schedule_id` (`schedule_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -4056,6 +4415,27 @@ CREATE TABLE IF NOT EXISTS `purchase_requisition_item` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `quotas`
+--
+
+DROP TABLE IF EXISTS `quotas`;
+CREATE TABLE IF NOT EXISTS `quotas` (
+  `quota_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `quantity` int NOT NULL,
+  `duration` int DEFAULT NULL,
+  `units` varchar(25) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `group_id` int UNSIGNED DEFAULT NULL,
+  `resource_id` int UNSIGNED DEFAULT NULL,
+  `schedule_id` int UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`quota_id`),
+  KEY `group_id` (`group_id`),
+  KEY `resource_id` (`resource_id`),
+  KEY `schedule_id` (`schedule_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `reconciliation_item`
 --
 
@@ -4088,6 +4468,25 @@ CREATE TABLE IF NOT EXISTS `reconciliation_item` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `refund_transaction_log`
+--
+
+DROP TABLE IF EXISTS `refund_transaction_log`;
+CREATE TABLE IF NOT EXISTS `refund_transaction_log` (
+  `refund_transaction_log_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `refund_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payment_transaction_log_id` int UNSIGNED NOT NULL,
+  `refund_date` datetime NOT NULL,
+  `refund_amount` decimal(10,2) DEFAULT NULL,
+  `refund_reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (`refund_transaction_log_id`),
+  UNIQUE KEY `refund_id` (`refund_id`),
+  KEY `payment_transaction_log_id` (`payment_transaction_log_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `region`
 --
 
@@ -4105,6 +4504,25 @@ CREATE TABLE IF NOT EXISTS `region` (
   `deleted_by` int UNSIGNED DEFAULT NULL,
   PRIMARY KEY (`region_id`),
   KEY `idx_region_unit` (`sys_unit_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `reminders`
+--
+
+DROP TABLE IF EXISTS `reminders`;
+CREATE TABLE IF NOT EXISTS `reminders` (
+  `reminder_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` int UNSIGNED NOT NULL,
+  `address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `send_time` datetime NOT NULL,
+  `ref_number` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `reminder_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`reminder_id`),
+  KEY `user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -4163,6 +4581,399 @@ CREATE TABLE IF NOT EXISTS `request_for_quotation` (
   UNIQUE KEY `company_id` (`company_id`,`rfq_number`),
   KEY `idx_rfq_status` (`status`),
   KEY `idx_rfq_due_date` (`due_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `reservation_accessories`
+--
+
+DROP TABLE IF EXISTS `reservation_accessories`;
+CREATE TABLE IF NOT EXISTS `reservation_accessories` (
+  `series_id` int UNSIGNED NOT NULL,
+  `accessory_id` int UNSIGNED NOT NULL,
+  `quantity` int UNSIGNED NOT NULL DEFAULT '1',
+  PRIMARY KEY (`series_id`,`accessory_id`),
+  KEY `accessory_id` (`accessory_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `reservation_color_rules`
+--
+
+DROP TABLE IF EXISTS `reservation_color_rules`;
+CREATE TABLE IF NOT EXISTS `reservation_color_rules` (
+  `reservation_color_rule_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `schedule_id` int UNSIGNED DEFAULT NULL,
+  `resource_id` int UNSIGNED DEFAULT NULL,
+  `rule_type` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `color` varchar(7) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `background_color` varchar(7) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`reservation_color_rule_id`),
+  KEY `schedule_id` (`schedule_id`),
+  KEY `resource_id` (`resource_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `reservation_files`
+--
+
+DROP TABLE IF EXISTS `reservation_files`;
+CREATE TABLE IF NOT EXISTS `reservation_files` (
+  `file_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `series_id` int UNSIGNED NOT NULL,
+  `file_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_size` int UNSIGNED DEFAULT NULL,
+  `file_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `uploaded_at` datetime NOT NULL,
+  PRIMARY KEY (`file_id`),
+  KEY `series_id` (`series_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `reservation_guests`
+--
+
+DROP TABLE IF EXISTS `reservation_guests`;
+CREATE TABLE IF NOT EXISTS `reservation_guests` (
+  `reservation_instance_id` int UNSIGNED NOT NULL,
+  `email` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `full_name` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`reservation_instance_id`,`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `reservation_instances`
+--
+
+DROP TABLE IF EXISTS `reservation_instances`;
+CREATE TABLE IF NOT EXISTS `reservation_instances` (
+  `reservation_instance_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `start_date` datetime NOT NULL,
+  `end_date` datetime NOT NULL,
+  `reference_number` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `series_id` int UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_by` int UNSIGNED DEFAULT NULL,
+  `updated_by` int UNSIGNED DEFAULT NULL,
+  `deleted_by` int UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`reservation_instance_id`),
+  KEY `start_date` (`start_date`),
+  KEY `end_date` (`end_date`),
+  KEY `reference_number` (`reference_number`),
+  KEY `series_id` (`series_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `reservation_reminders`
+--
+
+DROP TABLE IF EXISTS `reservation_reminders`;
+CREATE TABLE IF NOT EXISTS `reservation_reminders` (
+  `reservation_reminder_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `series_id` int UNSIGNED NOT NULL,
+  `minutes_prior` int UNSIGNED NOT NULL,
+  `reminder_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`reservation_reminder_id`),
+  KEY `series_id` (`series_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `reservation_resources`
+--
+
+DROP TABLE IF EXISTS `reservation_resources`;
+CREATE TABLE IF NOT EXISTS `reservation_resources` (
+  `series_id` int UNSIGNED NOT NULL,
+  `resource_id` int UNSIGNED NOT NULL,
+  `resource_level_id` tinyint UNSIGNED NOT NULL,
+  PRIMARY KEY (`series_id`,`resource_id`),
+  KEY `resource_id` (`resource_id`),
+  KEY `series_id` (`series_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `reservation_series`
+--
+
+DROP TABLE IF EXISTS `reservation_series`;
+CREATE TABLE IF NOT EXISTS `reservation_series` (
+  `series_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `title` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `allow_participation` tinyint UNSIGNED NOT NULL DEFAULT '0',
+  `allow_anon_participation` tinyint UNSIGNED NOT NULL DEFAULT '0',
+  `type_id` tinyint UNSIGNED NOT NULL,
+  `status_id` tinyint UNSIGNED NOT NULL,
+  `repeat_type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `repeat_options` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `owner_id` int UNSIGNED NOT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_by` int UNSIGNED DEFAULT NULL,
+  `updated_by` int UNSIGNED DEFAULT NULL,
+  `deleted_by` int UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`series_id`),
+  KEY `type_id` (`type_id`),
+  KEY `status_id` (`status_id`),
+  KEY `owner_id` (`owner_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `reservation_statuses`
+--
+
+DROP TABLE IF EXISTS `reservation_statuses`;
+CREATE TABLE IF NOT EXISTS `reservation_statuses` (
+  `status_id` tinyint UNSIGNED NOT NULL,
+  `label` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`status_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Despejando dados para a tabela `reservation_statuses`
+--
+
+INSERT INTO `reservation_statuses` (`status_id`, `label`) VALUES
+(1, 'pending'),
+(2, 'approved'),
+(3, 'cancelled'),
+(4, 'waitlisted');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `reservation_types`
+--
+
+DROP TABLE IF EXISTS `reservation_types`;
+CREATE TABLE IF NOT EXISTS `reservation_types` (
+  `type_id` tinyint UNSIGNED NOT NULL,
+  `label` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`type_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Despejando dados para a tabela `reservation_types`
+--
+
+INSERT INTO `reservation_types` (`type_id`, `label`) VALUES
+(1, 'reservation'),
+(2, 'reservation');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `reservation_users`
+--
+
+DROP TABLE IF EXISTS `reservation_users`;
+CREATE TABLE IF NOT EXISTS `reservation_users` (
+  `reservation_instance_id` int UNSIGNED NOT NULL,
+  `sys_user_id` int UNSIGNED NOT NULL,
+  `reservation_user_level` tinyint UNSIGNED NOT NULL,
+  PRIMARY KEY (`reservation_instance_id`,`sys_user_id`),
+  KEY `reservation_instance_id` (`reservation_instance_id`),
+  KEY `sys_user_id` (`sys_user_id`),
+  KEY `reservation_user_level` (`reservation_user_level`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `reservation_waitlist_requests`
+--
+
+DROP TABLE IF EXISTS `reservation_waitlist_requests`;
+CREATE TABLE IF NOT EXISTS `reservation_waitlist_requests` (
+  `waitlist_request_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `sys_user_id` int UNSIGNED DEFAULT NULL,
+  `resource_id` int UNSIGNED NOT NULL,
+  `schedule_id` int UNSIGNED NOT NULL,
+  `start_date` datetime NOT NULL,
+  `end_date` datetime NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`waitlist_request_id`),
+  KEY `sys_user_id` (`sys_user_id`),
+  KEY `resource_id` (`resource_id`),
+  KEY `schedule_id` (`schedule_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `resources`
+--
+
+DROP TABLE IF EXISTS `resources`;
+CREATE TABLE IF NOT EXISTS `resources` (
+  `resource_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `location` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `contact_info` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `is_active` tinyint UNSIGNED NOT NULL DEFAULT '1',
+  `min_duration` int DEFAULT NULL,
+  `min_increment` int DEFAULT NULL,
+  `max_duration` int DEFAULT NULL,
+  `unit_cost` decimal(10,2) DEFAULT NULL,
+  `auto_assign` tinyint UNSIGNED NOT NULL DEFAULT '1',
+  `requires_approval` tinyint UNSIGNED NOT NULL DEFAULT '0',
+  `allow_multiday_reservations` tinyint UNSIGNED NOT NULL DEFAULT '1',
+  `max_participants` int UNSIGNED DEFAULT NULL,
+  `min_notice_time` int DEFAULT NULL,
+  `max_notice_time` int DEFAULT NULL,
+  `image_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `schedule_id` int UNSIGNED NOT NULL,
+  `resource_type_id` int UNSIGNED DEFAULT NULL,
+  `sys_unit_id` int UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_by` int UNSIGNED DEFAULT NULL,
+  `updated_by` int UNSIGNED DEFAULT NULL,
+  `deleted_by` int UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`resource_id`),
+  KEY `schedule_id` (`schedule_id`),
+  KEY `resource_type_id` (`resource_type_id`),
+  KEY `fk_resources_unit` (`sys_unit_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `resource_accessories`
+--
+
+DROP TABLE IF EXISTS `resource_accessories`;
+CREATE TABLE IF NOT EXISTS `resource_accessories` (
+  `resource_id` int UNSIGNED NOT NULL,
+  `accessory_id` int UNSIGNED NOT NULL,
+  `quantity_required` int UNSIGNED DEFAULT '1',
+  PRIMARY KEY (`resource_id`,`accessory_id`),
+  KEY `accessory_id` (`accessory_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `resource_groups`
+--
+
+DROP TABLE IF EXISTS `resource_groups`;
+CREATE TABLE IF NOT EXISTS `resource_groups` (
+  `resource_group_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `parent_id` int UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_by` int UNSIGNED DEFAULT NULL,
+  `updated_by` int UNSIGNED DEFAULT NULL,
+  `deleted_by` int UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`resource_group_id`),
+  KEY `parent_id` (`parent_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `resource_group_assignment`
+--
+
+DROP TABLE IF EXISTS `resource_group_assignment`;
+CREATE TABLE IF NOT EXISTS `resource_group_assignment` (
+  `resource_id` int UNSIGNED NOT NULL,
+  `resource_group_id` int UNSIGNED NOT NULL,
+  PRIMARY KEY (`resource_id`,`resource_group_id`),
+  KEY `resource_group_id` (`resource_group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `resource_images`
+--
+
+DROP TABLE IF EXISTS `resource_images`;
+CREATE TABLE IF NOT EXISTS `resource_images` (
+  `resource_image_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `resource_id` int UNSIGNED NOT NULL,
+  `file_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_size` int UNSIGNED DEFAULT NULL,
+  `file_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`resource_image_id`),
+  KEY `resource_id` (`resource_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `resource_status_reasons`
+--
+
+DROP TABLE IF EXISTS `resource_status_reasons`;
+CREATE TABLE IF NOT EXISTS `resource_status_reasons` (
+  `resource_status_reason_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`resource_status_reason_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `resource_types`
+--
+
+DROP TABLE IF EXISTS `resource_types`;
+CREATE TABLE IF NOT EXISTS `resource_types` (
+  `resource_type_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_by` int UNSIGNED DEFAULT NULL,
+  `updated_by` int UNSIGNED DEFAULT NULL,
+  `deleted_by` int UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`resource_type_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `resource_type_assignment`
+--
+
+DROP TABLE IF EXISTS `resource_type_assignment`;
+CREATE TABLE IF NOT EXISTS `resource_type_assignment` (
+  `resource_id` int UNSIGNED NOT NULL,
+  `resource_type_id` int UNSIGNED NOT NULL,
+  PRIMARY KEY (`resource_id`,`resource_type_id`),
+  KEY `fk_rta_type` (`resource_type_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -4424,6 +5235,49 @@ CREATE TABLE IF NOT EXISTS `sales_order_item` (
   KEY `idx_soi_variation` (`variation_id`),
   KEY `idx_soi_uom` (`uom_id`),
   KEY `idx_soi_warehouse` (`warehouse_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `saved_reports`
+--
+
+DROP TABLE IF EXISTS `saved_reports`;
+CREATE TABLE IF NOT EXISTS `saved_reports` (
+  `saved_report_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `report_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sys_user_id` int UNSIGNED NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `report_details` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`saved_report_id`),
+  KEY `sys_user_id` (`sys_user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `schedules`
+--
+
+DROP TABLE IF EXISTS `schedules`;
+CREATE TABLE IF NOT EXISTS `schedules` (
+  `schedule_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_default` tinyint UNSIGNED NOT NULL DEFAULT '0',
+  `weekday_start` tinyint UNSIGNED NOT NULL DEFAULT '0',
+  `days_visible` tinyint UNSIGNED NOT NULL DEFAULT '7',
+  `layout_id` int UNSIGNED NOT NULL,
+  `sys_unit_id` int UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_by` int UNSIGNED DEFAULT NULL,
+  `updated_by` int UNSIGNED DEFAULT NULL,
+  `deleted_by` int UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`schedule_id`),
+  KEY `layout_id` (`layout_id`),
+  KEY `fk_schedules_unit` (`sys_unit_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -5616,6 +6470,47 @@ CREATE TABLE IF NOT EXISTS `tax_code` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `terms_of_service`
+--
+
+DROP TABLE IF EXISTS `terms_of_service`;
+CREATE TABLE IF NOT EXISTS `terms_of_service` (
+  `terms_of_service_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `terms_text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `terms_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'general',
+  `effective_date` datetime NOT NULL,
+  PRIMARY KEY (`terms_of_service_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `time_blocks`
+--
+
+DROP TABLE IF EXISTS `time_blocks`;
+CREATE TABLE IF NOT EXISTS `time_blocks` (
+  `block_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `label` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `end_label` varchar(85) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `availability_code` tinyint UNSIGNED NOT NULL DEFAULT '1',
+  `layout_id` int UNSIGNED NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `day_of_week` smallint UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_by` int UNSIGNED DEFAULT NULL,
+  `updated_by` int UNSIGNED DEFAULT NULL,
+  `deleted_by` int UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`block_id`),
+  KEY `layout_id` (`layout_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `transaction`
 --
 
@@ -5804,7 +6699,7 @@ CREATE TABLE IF NOT EXISTS `trip_status` (
   `deleted_by` int UNSIGNED DEFAULT NULL,
   PRIMARY KEY (`trip_status_id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Despejando dados para a tabela `trip_status`
@@ -5870,6 +6765,71 @@ CREATE TABLE IF NOT EXISTS `user_company_access` (
   PRIMARY KEY (`user_company_access_id`),
   UNIQUE KEY `uk_user_company` (`sys_user_id`,`company_id`),
   KEY `idx_user_access_company` (`company_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `user_email_preferences`
+--
+
+DROP TABLE IF EXISTS `user_email_preferences`;
+CREATE TABLE IF NOT EXISTS `user_email_preferences` (
+  `sys_user_id` int UNSIGNED NOT NULL,
+  `event_category` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `event_type` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`sys_user_id`,`event_category`,`event_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `user_preferences`
+--
+
+DROP TABLE IF EXISTS `user_preferences`;
+CREATE TABLE IF NOT EXISTS `user_preferences` (
+  `user_preferences_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `sys_user_id` int UNSIGNED NOT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`user_preferences_id`),
+  UNIQUE KEY `sys_user_id` (`sys_user_id`,`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `user_resource_permissions`
+--
+
+DROP TABLE IF EXISTS `user_resource_permissions`;
+CREATE TABLE IF NOT EXISTS `user_resource_permissions` (
+  `sys_user_id` int UNSIGNED NOT NULL,
+  `resource_id` int UNSIGNED NOT NULL,
+  `permission_id` tinyint UNSIGNED NOT NULL DEFAULT '1',
+  PRIMARY KEY (`sys_user_id`,`resource_id`),
+  KEY `sys_user_id` (`sys_user_id`),
+  KEY `resource_id` (`resource_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `user_session`
+--
+
+DROP TABLE IF EXISTS `user_session`;
+CREATE TABLE IF NOT EXISTS `user_session` (
+  `user_session_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `sys_user_id` int UNSIGNED NOT NULL,
+  `session_token` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_session_value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `expiry_date` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_session_id`),
+  KEY `sys_user_id` (`sys_user_id`),
+  KEY `session_token` (`session_token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -6083,7 +7043,7 @@ CREATE TABLE IF NOT EXISTS `vehicle_expense_status` (
   `deleted_by` int UNSIGNED DEFAULT NULL,
   PRIMARY KEY (`vehicle_expense_status_id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Despejando dados para a tabela `vehicle_expense_status`
@@ -6153,7 +7113,7 @@ CREATE TABLE IF NOT EXISTS `vehicle_request_status` (
   `deleted_by` int UNSIGNED DEFAULT NULL,
   PRIMARY KEY (`vehicle_request_status_id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Despejando dados para a tabela `vehicle_request_status`
@@ -6187,7 +7147,7 @@ CREATE TABLE IF NOT EXISTS `vehicle_request_type` (
   `deleted_by` int UNSIGNED DEFAULT NULL,
   PRIMARY KEY (`vehicle_request_type_id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Despejando dados para a tabela `vehicle_request_type`
@@ -6282,20 +7242,20 @@ INSERT INTO `vehicle_type` (`vehicle_type_id`, `sys_unit_id`, `sys_user_id`, `na
 --
 DROP VIEW IF EXISTS `view_accounts_receivable_aging`;
 CREATE TABLE IF NOT EXISTS `view_accounts_receivable_aging` (
-`account_code` varchar(30)
-,`account_id` int unsigned
-,`account_name` varchar(100)
-,`company_id` int unsigned
+`company_id` int unsigned
 ,`company_name` varchar(100)
 ,`contact_id` int unsigned
 ,`contact_name` varchar(100)
+,`account_id` int unsigned
+,`account_code` varchar(30)
+,`account_name` varchar(100)
 ,`days_1_30` decimal(42,4)
 ,`days_31_60` decimal(42,4)
 ,`days_61_90` decimal(42,4)
 ,`days_90_plus` decimal(42,4)
+,`total_outstanding` decimal(42,4)
 ,`max_days_outstanding` int
 ,`outstanding_items` bigint
-,`total_outstanding` decimal(42,4)
 );
 
 -- --------------------------------------------------------
@@ -6306,26 +7266,26 @@ CREATE TABLE IF NOT EXISTS `view_accounts_receivable_aging` (
 --
 DROP VIEW IF EXISTS `view_balance_sheet`;
 CREATE TABLE IF NOT EXISTS `view_balance_sheet` (
-`account_code` varchar(30)
-,`account_id` int unsigned
-,`account_name` varchar(100)
-,`account_type` varchar(50)
-,`account_type_id` int unsigned
-,`balance_amount` decimal(20,4)
-,`company_id` int unsigned
+`company_id` int unsigned
 ,`company_name` varchar(100)
-,`fiscal_period_id` int unsigned
 ,`fiscal_year_id` int unsigned
-,`nature` enum('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')
-,`nature_total` decimal(42,4)
-,`period_end_date` date
-,`period_name` varchar(50)
-,`running_total` decimal(42,4)
-,`total_assets` decimal(42,4)
-,`total_equity` decimal(42,4)
-,`total_liabilities` decimal(42,4)
-,`total_liabilities_equity` decimal(42,4)
 ,`year_name` varchar(50)
+,`fiscal_period_id` int unsigned
+,`period_name` varchar(50)
+,`period_end_date` date
+,`account_id` int unsigned
+,`account_code` varchar(30)
+,`account_name` varchar(100)
+,`account_type_id` int unsigned
+,`account_type` varchar(50)
+,`nature` enum('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')
+,`balance_amount` decimal(20,4)
+,`running_total` decimal(42,4)
+,`nature_total` decimal(42,4)
+,`total_assets` decimal(42,4)
+,`total_liabilities` decimal(42,4)
+,`total_equity` decimal(42,4)
+,`total_liabilities_equity` decimal(42,4)
 );
 
 -- --------------------------------------------------------
@@ -6336,21 +7296,21 @@ CREATE TABLE IF NOT EXISTS `view_balance_sheet` (
 --
 DROP VIEW IF EXISTS `view_budget_vs_actual`;
 CREATE TABLE IF NOT EXISTS `view_budget_vs_actual` (
-`account_code` varchar(30)
-,`account_id` int unsigned
-,`account_name` varchar(100)
-,`actual_amount` decimal(20,4)
-,`budget_amount` decimal(19,4)
-,`budget_name` varchar(100)
-,`company_id` int unsigned
+`company_id` int unsigned
 ,`company_name` varchar(100)
-,`fiscal_period_id` int unsigned
 ,`fiscal_year_id` int unsigned
-,`nature` enum('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')
+,`year_name` varchar(50)
+,`fiscal_period_id` int unsigned
 ,`period_name` varchar(50)
+,`account_id` int unsigned
+,`account_code` varchar(30)
+,`account_name` varchar(100)
+,`nature` enum('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')
+,`budget_amount` decimal(19,4)
+,`actual_amount` decimal(20,4)
 ,`variance` decimal(21,4)
 ,`variance_percentage` decimal(32,8)
-,`year_name` varchar(50)
+,`budget_name` varchar(100)
 );
 
 -- --------------------------------------------------------
@@ -6361,20 +7321,20 @@ CREATE TABLE IF NOT EXISTS `view_budget_vs_actual` (
 --
 DROP VIEW IF EXISTS `view_cash_flow`;
 CREATE TABLE IF NOT EXISTS `view_cash_flow` (
-`account_code` varchar(30)
+`company_id` int unsigned
+,`company_name` varchar(100)
+,`journal_date` date
+,`fiscal_year_id` int unsigned
+,`year_name` varchar(50)
+,`fiscal_period_id` int unsigned
+,`period_name` varchar(50)
 ,`account_id` int unsigned
+,`account_code` varchar(30)
 ,`account_name` varchar(100)
 ,`cash_inflow` decimal(41,4)
 ,`cash_outflow` decimal(41,4)
-,`company_id` int unsigned
-,`company_name` varchar(100)
-,`fiscal_period_id` int unsigned
-,`fiscal_year_id` int unsigned
-,`journal_date` date
 ,`net_cash_flow` decimal(42,4)
-,`period_name` varchar(50)
 ,`transaction_count` bigint
-,`year_name` varchar(50)
 );
 
 -- --------------------------------------------------------
@@ -6385,16 +7345,16 @@ CREATE TABLE IF NOT EXISTS `view_cash_flow` (
 --
 DROP VIEW IF EXISTS `view_consolidated_financials`;
 CREATE TABLE IF NOT EXISTS `view_consolidated_financials` (
-`amount` decimal(42,4)
+`parent_company_id` int unsigned
+,`parent_company_name` varchar(100)
 ,`company_id` int unsigned
 ,`company_name` varchar(100)
-,`fiscal_period_id` int unsigned
 ,`fiscal_year_id` int unsigned
-,`nature` enum('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')
-,`parent_company_id` int unsigned
-,`parent_company_name` varchar(100)
-,`period_name` varchar(50)
 ,`year_name` varchar(50)
+,`fiscal_period_id` int unsigned
+,`period_name` varchar(50)
+,`nature` enum('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')
+,`amount` decimal(42,4)
 );
 
 -- --------------------------------------------------------
@@ -6405,40 +7365,40 @@ CREATE TABLE IF NOT EXISTS `view_consolidated_financials` (
 --
 DROP VIEW IF EXISTS `view_general_ledger`;
 CREATE TABLE IF NOT EXISTS `view_general_ledger` (
-`account_code` varchar(30)
-,`account_id` int unsigned
-,`account_name` varchar(100)
-,`account_nature` enum('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')
-,`company_id` int unsigned
+`company_id` int unsigned
 ,`company_name` varchar(100)
-,`contact_id` int unsigned
-,`contact_name` varchar(100)
-,`cost_center_code` varchar(30)
-,`cost_center_id` int unsigned
-,`cost_center_name` varchar(100)
-,`created_at` timestamp
-,`created_by` varchar(50)
-,`credit_amount` decimal(19,4)
-,`debit_amount` decimal(19,4)
-,`department_code` varchar(30)
-,`department_id` int unsigned
-,`department_name` varchar(100)
-,`fiscal_period_id` int unsigned
-,`fiscal_year_id` int unsigned
-,`journal_date` date
-,`journal_description` text
 ,`journal_id` int unsigned
-,`journal_line_id` int unsigned
 ,`journal_number` varchar(30)
+,`journal_date` date
 ,`journal_type` varchar(50)
-,`line_description` text
-,`line_number` int unsigned
-,`period_name` varchar(50)
-,`project_code` varchar(30)
-,`project_id` int unsigned
-,`project_name` varchar(100)
+,`journal_description` text
 ,`reference_number` varchar(50)
 ,`status` varchar(20)
+,`journal_line_id` int unsigned
+,`line_number` int unsigned
+,`account_id` int unsigned
+,`account_code` varchar(30)
+,`account_name` varchar(100)
+,`account_nature` enum('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')
+,`line_description` text
+,`debit_amount` decimal(19,4)
+,`credit_amount` decimal(19,4)
+,`cost_center_id` int unsigned
+,`cost_center_code` varchar(30)
+,`cost_center_name` varchar(100)
+,`department_id` int unsigned
+,`department_code` varchar(30)
+,`department_name` varchar(100)
+,`project_id` int unsigned
+,`project_code` varchar(30)
+,`project_name` varchar(100)
+,`contact_id` int unsigned
+,`contact_name` varchar(100)
+,`created_by` varchar(50)
+,`created_at` timestamp
+,`fiscal_period_id` int unsigned
+,`period_name` varchar(50)
+,`fiscal_year_id` int unsigned
 ,`year_name` varchar(50)
 );
 
@@ -6450,26 +7410,26 @@ CREATE TABLE IF NOT EXISTS `view_general_ledger` (
 --
 DROP VIEW IF EXISTS `view_income_statement`;
 CREATE TABLE IF NOT EXISTS `view_income_statement` (
-`account_code` varchar(30)
-,`account_id` int unsigned
-,`account_name` varchar(100)
-,`account_type` varchar(50)
-,`account_type_id` int unsigned
-,`company_id` int unsigned
+`company_id` int unsigned
 ,`company_name` varchar(100)
-,`fiscal_period_id` int unsigned
 ,`fiscal_year_id` int unsigned
-,`nature` enum('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')
-,`nature_total` decimal(42,4)
-,`net_amount` decimal(20,4)
-,`net_income` decimal(42,4)
-,`period_end_date` date
+,`year_name` varchar(50)
+,`fiscal_period_id` int unsigned
 ,`period_name` varchar(50)
 ,`period_start_date` date
+,`period_end_date` date
+,`account_id` int unsigned
+,`account_code` varchar(30)
+,`account_name` varchar(100)
+,`account_type_id` int unsigned
+,`account_type` varchar(50)
+,`nature` enum('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')
+,`net_amount` decimal(20,4)
 ,`running_total` decimal(42,4)
-,`total_expense` decimal(42,4)
+,`nature_total` decimal(42,4)
 ,`total_revenue` decimal(42,4)
-,`year_name` varchar(50)
+,`total_expense` decimal(42,4)
+,`net_income` decimal(42,4)
 );
 
 -- --------------------------------------------------------
@@ -6480,23 +7440,23 @@ CREATE TABLE IF NOT EXISTS `view_income_statement` (
 --
 DROP VIEW IF EXISTS `view_trial_balance`;
 CREATE TABLE IF NOT EXISTS `view_trial_balance` (
-`account_code` varchar(30)
-,`account_id` int unsigned
-,`account_name` varchar(100)
-,`account_type` varchar(50)
-,`account_type_id` int unsigned
-,`closing_balance` decimal(19,4)
-,`company_id` int unsigned
+`company_id` int unsigned
 ,`company_name` varchar(100)
-,`credit_total` decimal(19,4)
-,`debit_total` decimal(19,4)
-,`fiscal_period_id` int unsigned
 ,`fiscal_year_id` int unsigned
-,`nature` enum('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')
-,`net_balance` decimal(20,4)
-,`opening_balance` decimal(19,4)
-,`period_name` varchar(50)
 ,`year_name` varchar(50)
+,`fiscal_period_id` int unsigned
+,`period_name` varchar(50)
+,`account_id` int unsigned
+,`account_code` varchar(30)
+,`account_name` varchar(100)
+,`account_type_id` int unsigned
+,`account_type` varchar(50)
+,`nature` enum('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')
+,`opening_balance` decimal(19,4)
+,`debit_total` decimal(19,4)
+,`credit_total` decimal(19,4)
+,`closing_balance` decimal(19,4)
+,`net_balance` decimal(20,4)
 );
 
 -- --------------------------------------------------------
@@ -6509,19 +7469,19 @@ DROP VIEW IF EXISTS `vw_batch_expiry`;
 CREATE TABLE IF NOT EXISTS `vw_batch_expiry` (
 `batch_id` int unsigned
 ,`batch_number` varchar(50)
-,`cost_price` decimal(15,4)
-,`current_quantity` decimal(15,3)
-,`days_until_expiry` int
-,`expiry_date` date
-,`expiry_status` varchar(24)
-,`manufacture_date` date
-,`product_code` varchar(50)
 ,`product_id` int unsigned
+,`product_code` varchar(50)
 ,`product_name` varchar(200)
-,`supplier_name` varchar(100)
-,`total_value` decimal(30,7)
 ,`variation_code` varchar(50)
 ,`variation_name` varchar(200)
+,`manufacture_date` date
+,`expiry_date` date
+,`current_quantity` decimal(15,3)
+,`cost_price` decimal(15,4)
+,`total_value` decimal(30,7)
+,`days_until_expiry` int
+,`expiry_status` varchar(24)
+,`supplier_name` varchar(100)
 );
 
 -- --------------------------------------------------------
@@ -6532,25 +7492,25 @@ CREATE TABLE IF NOT EXISTS `vw_batch_expiry` (
 --
 DROP VIEW IF EXISTS `vw_current_inventory`;
 CREATE TABLE IF NOT EXISTS `vw_current_inventory` (
-`brand_id` int unsigned
-,`brand_name` varchar(100)
-,`category_id` int unsigned
-,`category_name` varchar(100)
-,`location_code` varchar(20)
-,`max_stock_level` decimal(15,3)
-,`min_stock_level` decimal(15,3)
-,`product_code` varchar(50)
+`product_code` varchar(50)
 ,`product_name` varchar(200)
-,`qty_available` decimal(15,3)
-,`qty_on_hand` decimal(15,3)
-,`qty_on_order` decimal(15,3)
-,`qty_reserved` decimal(15,3)
-,`reorder_point` decimal(15,3)
-,`reorder_qty` decimal(15,3)
-,`uom_code` varchar(10)
 ,`variation_code` varchar(50)
 ,`variation_name` varchar(200)
 ,`warehouse_name` varchar(100)
+,`location_code` varchar(20)
+,`qty_on_hand` decimal(15,3)
+,`qty_reserved` decimal(15,3)
+,`qty_available` decimal(15,3)
+,`qty_on_order` decimal(15,3)
+,`min_stock_level` decimal(15,3)
+,`max_stock_level` decimal(15,3)
+,`reorder_point` decimal(15,3)
+,`reorder_qty` decimal(15,3)
+,`uom_code` varchar(10)
+,`category_id` int unsigned
+,`category_name` varchar(100)
+,`brand_id` int unsigned
+,`brand_name` varchar(100)
 );
 
 -- --------------------------------------------------------
@@ -6561,22 +7521,22 @@ CREATE TABLE IF NOT EXISTS `vw_current_inventory` (
 --
 DROP VIEW IF EXISTS `vw_inventory_aging`;
 CREATE TABLE IF NOT EXISTS `vw_inventory_aging` (
-`age_bucket` varchar(13)
-,`brand_name` varchar(100)
-,`category_name` varchar(100)
-,`cost_price` decimal(15,4)
-,`days_in_inventory` int
-,`last_receipt_date` timestamp
-,`location_code` varchar(20)
+`product_id` int unsigned
 ,`product_code` varchar(50)
-,`product_id` int unsigned
 ,`product_name` varchar(200)
-,`qty_on_hand` decimal(15,3)
-,`total_value` decimal(30,7)
-,`variation_code` varchar(50)
 ,`variation_id` int unsigned
+,`variation_code` varchar(50)
 ,`variation_name` varchar(200)
 ,`warehouse_name` varchar(100)
+,`location_code` varchar(20)
+,`qty_on_hand` decimal(15,3)
+,`cost_price` decimal(15,4)
+,`total_value` decimal(30,7)
+,`category_name` varchar(100)
+,`brand_name` varchar(100)
+,`last_receipt_date` timestamp
+,`days_in_inventory` int
+,`age_bucket` varchar(13)
 );
 
 -- --------------------------------------------------------
@@ -6587,22 +7547,22 @@ CREATE TABLE IF NOT EXISTS `vw_inventory_aging` (
 --
 DROP VIEW IF EXISTS `vw_inventory_valuation`;
 CREATE TABLE IF NOT EXISTS `vw_inventory_valuation` (
-`brand_name` varchar(100)
-,`category_name` varchar(100)
-,`cost_price` decimal(15,4)
-,`currency_code` varchar(3)
-,`location_code` varchar(20)
-,`location_id` int unsigned
+`product_id` int unsigned
 ,`product_code` varchar(50)
-,`product_id` int unsigned
 ,`product_name` varchar(200)
-,`qty_on_hand` decimal(15,3)
-,`total_value` decimal(30,7)
-,`variation_code` varchar(50)
 ,`variation_id` int unsigned
+,`variation_code` varchar(50)
 ,`variation_name` varchar(200)
 ,`warehouse_id` int unsigned
 ,`warehouse_name` varchar(100)
+,`location_id` int unsigned
+,`location_code` varchar(20)
+,`qty_on_hand` decimal(15,3)
+,`cost_price` decimal(15,4)
+,`total_value` decimal(30,7)
+,`currency_code` varchar(3)
+,`category_name` varchar(100)
+,`brand_name` varchar(100)
 );
 
 -- --------------------------------------------------------
@@ -6613,25 +7573,25 @@ CREATE TABLE IF NOT EXISTS `vw_inventory_valuation` (
 --
 DROP VIEW IF EXISTS `vw_product_performance`;
 CREATE TABLE IF NOT EXISTS `vw_product_performance` (
-`available_stock` decimal(37,3)
-,`brand_name` varchar(100)
-,`category_name` varchar(100)
-,`cost_price` decimal(15,4)
-,`current_stock` decimal(37,3)
-,`daily_velocity` decimal(41,7)
-,`days_of_inventory` decimal(48,7)
-,`gross_profit` decimal(16,4)
-,`incoming_stock` decimal(37,3)
+`product_id` int unsigned
 ,`product_code` varchar(50)
-,`product_id` int unsigned
 ,`product_name` varchar(200)
-,`profit_margin` decimal(27,8)
+,`variation_id` int unsigned
+,`variation_code` varchar(50)
+,`variation_name` varchar(200)
+,`category_name` varchar(100)
+,`brand_name` varchar(100)
 ,`qty_sold_30days` decimal(37,3)
 ,`qty_sold_90days` decimal(37,3)
+,`current_stock` decimal(37,3)
+,`available_stock` decimal(37,3)
+,`incoming_stock` decimal(37,3)
+,`cost_price` decimal(15,4)
 ,`retail_price` decimal(15,4)
-,`variation_code` varchar(50)
-,`variation_id` int unsigned
-,`variation_name` varchar(200)
+,`gross_profit` decimal(16,4)
+,`profit_margin` decimal(27,8)
+,`daily_velocity` decimal(41,7)
+,`days_of_inventory` decimal(48,7)
 );
 
 -- --------------------------------------------------------
@@ -6642,27 +7602,27 @@ CREATE TABLE IF NOT EXISTS `vw_product_performance` (
 --
 DROP VIEW IF EXISTS `vw_purchase_order_status`;
 CREATE TABLE IF NOT EXISTS `vw_purchase_order_status` (
-`currency_code` varchar(3)
-,`days_until_delivery` int
-,`delivery_status` varchar(9)
-,`discount_amount` decimal(15,4)
-,`expected_delivery_date` date
-,`po_date` date
-,`po_id` int unsigned
+`po_id` int unsigned
 ,`po_number` varchar(50)
+,`po_date` date
+,`expected_delivery_date` date
 ,`po_status` enum('DRAFT','APPROVED','SENT','PARTIALLY_RECEIVED','FULLY_RECEIVED','CLOSED','CANCELLED')
-,`shipping_amount` decimal(15,4)
-,`subtotal` decimal(15,4)
 ,`supplier_id` int unsigned
 ,`supplier_name` varchar(100)
-,`tax_amount` decimal(15,4)
-,`total_amount` decimal(15,4)
+,`warehouse_name` varchar(100)
 ,`total_line_items` bigint
 ,`total_ordered_qty` decimal(37,3)
-,`total_pending_qty` decimal(39,3)
 ,`total_received_qty` decimal(37,3)
 ,`total_returned_qty` decimal(37,3)
-,`warehouse_name` varchar(100)
+,`total_pending_qty` decimal(39,3)
+,`subtotal` decimal(15,4)
+,`tax_amount` decimal(15,4)
+,`discount_amount` decimal(15,4)
+,`shipping_amount` decimal(15,4)
+,`total_amount` decimal(15,4)
+,`currency_code` varchar(3)
+,`days_until_delivery` int
+,`delivery_status` varchar(9)
 );
 
 -- --------------------------------------------------------
@@ -6673,28 +7633,28 @@ CREATE TABLE IF NOT EXISTS `vw_purchase_order_status` (
 --
 DROP VIEW IF EXISTS `vw_reorder_recommendation`;
 CREATE TABLE IF NOT EXISTS `vw_reorder_recommendation` (
-`lead_time` int
-,`min_order_qty` decimal(10,3)
-,`min_stock_level` decimal(15,3)
-,`needs_reorder` int
+`product_id` int unsigned
 ,`product_code` varchar(50)
-,`product_id` int unsigned
 ,`product_name` varchar(200)
-,`reorder_point` decimal(15,3)
-,`reorder_qty` decimal(15,3)
-,`supplier_id` int unsigned
-,`supplier_name` varchar(100)
-,`supplier_price` decimal(15,4)
-,`total_qty_available` decimal(37,3)
-,`total_qty_on_hand` decimal(37,3)
-,`total_qty_on_order` decimal(37,3)
-,`total_qty_reserved` decimal(37,3)
-,`uom_code` varchar(10)
-,`variation_code` varchar(50)
 ,`variation_id` int unsigned
+,`variation_code` varchar(50)
 ,`variation_name` varchar(200)
 ,`warehouse_id` int unsigned
 ,`warehouse_name` varchar(100)
+,`total_qty_on_hand` decimal(37,3)
+,`total_qty_reserved` decimal(37,3)
+,`total_qty_available` decimal(37,3)
+,`total_qty_on_order` decimal(37,3)
+,`min_stock_level` decimal(15,3)
+,`reorder_point` decimal(15,3)
+,`reorder_qty` decimal(15,3)
+,`uom_code` varchar(10)
+,`needs_reorder` int
+,`supplier_id` int unsigned
+,`supplier_name` varchar(100)
+,`lead_time` int
+,`min_order_qty` decimal(10,3)
+,`supplier_price` decimal(15,4)
 );
 
 -- --------------------------------------------------------
@@ -6705,28 +7665,28 @@ CREATE TABLE IF NOT EXISTS `vw_reorder_recommendation` (
 --
 DROP VIEW IF EXISTS `vw_sales_order_status`;
 CREATE TABLE IF NOT EXISTS `vw_sales_order_status` (
-`currency_code` varchar(3)
+`so_id` int unsigned
+,`so_number` varchar(50)
+,`order_date` date
+,`expected_delivery_date` date
+,`so_status` enum('DRAFT','CONFIRMED','PROCESSING','PARTIALLY_SHIPPED','FULLY_SHIPPED','COMPLETED','CANCELLED')
 ,`customer_id` int unsigned
 ,`customer_name` varchar(100)
-,`days_until_delivery` int
-,`delivery_status` varchar(9)
-,`discount_amount` decimal(15,4)
-,`expected_delivery_date` date
-,`order_date` date
-,`shipping_amount` decimal(15,4)
-,`so_id` int unsigned
-,`so_number` varchar(50)
-,`so_status` enum('DRAFT','CONFIRMED','PROCESSING','PARTIALLY_SHIPPED','FULLY_SHIPPED','COMPLETED','CANCELLED')
-,`subtotal` decimal(15,4)
-,`tax_amount` decimal(15,4)
-,`total_allocated_qty` decimal(37,3)
-,`total_amount` decimal(15,4)
+,`warehouse_name` varchar(100)
 ,`total_line_items` bigint
 ,`total_ordered_qty` decimal(37,3)
-,`total_pending_qty` decimal(38,3)
-,`total_returned_qty` decimal(37,3)
+,`total_allocated_qty` decimal(37,3)
 ,`total_shipped_qty` decimal(37,3)
-,`warehouse_name` varchar(100)
+,`total_returned_qty` decimal(37,3)
+,`total_pending_qty` decimal(38,3)
+,`subtotal` decimal(15,4)
+,`tax_amount` decimal(15,4)
+,`discount_amount` decimal(15,4)
+,`shipping_amount` decimal(15,4)
+,`total_amount` decimal(15,4)
+,`currency_code` varchar(3)
+,`days_until_delivery` int
+,`delivery_status` varchar(9)
 );
 
 -- --------------------------------------------------------
@@ -6737,23 +7697,23 @@ CREATE TABLE IF NOT EXISTS `vw_sales_order_status` (
 --
 DROP VIEW IF EXISTS `vw_stock_accuracy`;
 CREATE TABLE IF NOT EXISTS `vw_stock_accuracy` (
-`category_name` varchar(100)
-,`count_date` date
-,`count_id` int unsigned
+`count_id` int unsigned
 ,`count_name` varchar(100)
+,`count_date` date
 ,`count_status` enum('DRAFT','IN_PROGRESS','COMPLETED','CANCELLED')
+,`warehouse_name` varchar(100)
+,`product_id` int unsigned
+,`product_code` varchar(50)
+,`product_name` varchar(200)
+,`variation_code` varchar(50)
+,`variation_name` varchar(200)
+,`expected_qty` decimal(15,3)
 ,`counted_qty` decimal(15,3)
 ,`difference` decimal(15,3)
 ,`discrepancy_percentage` decimal(25,7)
-,`expected_qty` decimal(15,3)
-,`product_code` varchar(50)
-,`product_id` int unsigned
-,`product_name` varchar(200)
 ,`uom_code` varchar(10)
+,`category_name` varchar(100)
 ,`variance_type` varchar(8)
-,`variation_code` varchar(50)
-,`variation_name` varchar(200)
-,`warehouse_name` varchar(100)
 );
 
 -- --------------------------------------------------------
@@ -6764,26 +7724,26 @@ CREATE TABLE IF NOT EXISTS `vw_stock_accuracy` (
 --
 DROP VIEW IF EXISTS `vw_stock_movement`;
 CREATE TABLE IF NOT EXISTS `vw_stock_movement` (
-`batch_number` varchar(50)
-,`direction` enum('IN','OUT','TRANSFER')
-,`from_location` varchar(20)
-,`from_warehouse` varchar(100)
+`movement_id` int unsigned
 ,`movement_date` timestamp
-,`movement_id` int unsigned
 ,`movement_type` varchar(50)
+,`direction` enum('IN','OUT','TRANSFER')
 ,`product_code` varchar(50)
 ,`product_name` varchar(200)
-,`quantity` decimal(15,3)
-,`reference_id` int
-,`reference_type` varchar(50)
-,`serial_number` varchar(50)
-,`to_location` varchar(20)
-,`to_warehouse` varchar(100)
-,`total_cost` decimal(15,4)
-,`unit_cost` decimal(15,4)
-,`uom_code` varchar(10)
 ,`variation_code` varchar(50)
 ,`variation_name` varchar(200)
+,`quantity` decimal(15,3)
+,`uom_code` varchar(10)
+,`from_warehouse` varchar(100)
+,`from_location` varchar(20)
+,`to_warehouse` varchar(100)
+,`to_location` varchar(20)
+,`reference_type` varchar(50)
+,`reference_id` int
+,`batch_number` varchar(50)
+,`serial_number` varchar(50)
+,`unit_cost` decimal(15,4)
+,`total_cost` decimal(15,4)
 );
 
 -- --------------------------------------------------------
@@ -6794,19 +7754,19 @@ CREATE TABLE IF NOT EXISTS `vw_stock_movement` (
 --
 DROP VIEW IF EXISTS `vw_stock_turnover`;
 CREATE TABLE IF NOT EXISTS `vw_stock_turnover` (
-`avg_inventory` decimal(19,7)
-,`brand_name` varchar(100)
-,`category_name` varchar(100)
-,`days_since_last_sale` int
-,`last_sale_date` timestamp
+`product_id` int unsigned
 ,`product_code` varchar(50)
-,`product_id` int unsigned
 ,`product_name` varchar(200)
-,`qty_sold_30days` decimal(37,3)
-,`turnover_rate_30days` decimal(48,7)
-,`variation_code` varchar(50)
 ,`variation_id` int unsigned
+,`variation_code` varchar(50)
 ,`variation_name` varchar(200)
+,`category_name` varchar(100)
+,`brand_name` varchar(100)
+,`qty_sold_30days` decimal(37,3)
+,`avg_inventory` decimal(19,7)
+,`turnover_rate_30days` decimal(48,7)
+,`last_sale_date` timestamp
+,`days_since_last_sale` int
 );
 
 -- --------------------------------------------------------
@@ -6817,19 +7777,19 @@ CREATE TABLE IF NOT EXISTS `vw_stock_turnover` (
 --
 DROP VIEW IF EXISTS `vw_supply_chain_kpi`;
 CREATE TABLE IF NOT EXISTS `vw_supply_chain_kpi` (
-`active_products` bigint
-,`adjustments_today` bigint
-,`open_po_value` decimal(37,4)
-,`open_purchase_orders` bigint
-,`open_sales_orders` bigint
-,`open_so_value` decimal(37,4)
-,`open_transfers` bigint
-,`products_to_reorder` bigint
-,`receipts_today` bigint
-,`report_date` date
-,`shipments_today` bigint
+`report_date` date
+,`active_products` bigint
 ,`total_inventory_qty` decimal(37,3)
 ,`total_inventory_value` decimal(52,7)
+,`open_purchase_orders` bigint
+,`open_po_value` decimal(37,4)
+,`receipts_today` bigint
+,`open_sales_orders` bigint
+,`open_so_value` decimal(37,4)
+,`shipments_today` bigint
+,`products_to_reorder` bigint
+,`adjustments_today` bigint
+,`open_transfers` bigint
 );
 
 -- --------------------------------------------------------
@@ -6840,18 +7800,18 @@ CREATE TABLE IF NOT EXISTS `vw_supply_chain_kpi` (
 --
 DROP VIEW IF EXISTS `vw_warehouse_transfer_status`;
 CREATE TABLE IF NOT EXISTS `vw_warehouse_transfer_status` (
-`from_warehouse` varchar(100)
-,`status_description` varchar(18)
-,`to_warehouse` varchar(100)
-,`total_line_items` bigint
-,`total_pending_qty` decimal(38,3)
-,`total_received_qty` decimal(37,3)
-,`total_sent_qty` decimal(37,3)
-,`total_transfer_qty` decimal(37,3)
-,`transfer_date` date
-,`transfer_id` int unsigned
+`transfer_id` int unsigned
 ,`transfer_number` varchar(50)
+,`transfer_date` date
+,`from_warehouse` varchar(100)
+,`to_warehouse` varchar(100)
 ,`transfer_status` enum('DRAFT','PENDING','IN_TRANSIT','PARTIALLY_RECEIVED','FULLY_RECEIVED','CANCELLED')
+,`total_line_items` bigint
+,`total_transfer_qty` decimal(37,3)
+,`total_sent_qty` decimal(37,3)
+,`total_received_qty` decimal(37,3)
+,`total_pending_qty` decimal(38,3)
+,`status_description` varchar(18)
 );
 
 -- --------------------------------------------------------
@@ -6862,15 +7822,15 @@ CREATE TABLE IF NOT EXISTS `vw_warehouse_transfer_status` (
 --
 DROP VIEW IF EXISTS `vw_warehouse_utilization`;
 CREATE TABLE IF NOT EXISTS `vw_warehouse_utilization` (
-`empty_locations` bigint
-,`location_utilization_percentage` decimal(27,4)
-,`occupied_locations` bigint
-,`total_items` decimal(37,3)
-,`total_locations` bigint
-,`total_volume_used` decimal(65,12)
-,`unique_products` bigint
-,`warehouse_id` int unsigned
+`warehouse_id` int unsigned
 ,`warehouse_name` varchar(100)
+,`total_locations` bigint
+,`unique_products` bigint
+,`total_items` decimal(37,3)
+,`total_volume_used` decimal(65,12)
+,`empty_locations` bigint
+,`occupied_locations` bigint
+,`location_utilization_percentage` decimal(27,4)
 );
 
 -- --------------------------------------------------------
@@ -7235,6 +8195,12 @@ ALTER TABLE `accounting_code`
   ADD CONSTRAINT `fk_accounting_code_type` FOREIGN KEY (`account_type_id`) REFERENCES `account_type` (`account_type_id`);
 
 --
+-- Restrições para tabelas `account_activation`
+--
+ALTER TABLE `account_activation`
+  ADD CONSTRAINT `fk_aa_user` FOREIGN KEY (`sys_user_id`) REFERENCES `sys_user` (`sys_user_id`) ON DELETE CASCADE;
+
+--
 -- Restrições para tabelas `account_daily_balance`
 --
 ALTER TABLE `account_daily_balance`
@@ -7372,6 +8338,25 @@ ALTER TABLE `billing_rule_application`
   ADD CONSTRAINT `fk_billing_rule_app_rule` FOREIGN KEY (`rule_id`) REFERENCES `billing_rule` (`billing_rule_id`),
   ADD CONSTRAINT `fk_billing_rule_app_unit` FOREIGN KEY (`sys_unit_id`) REFERENCES `sys_unit` (`sys_unit_id`),
   ADD CONSTRAINT `fk_billing_rule_app_user` FOREIGN KEY (`sys_user_id`) REFERENCES `sys_user` (`sys_user_id`);
+
+--
+-- Restrições para tabelas `blackout_instances`
+--
+ALTER TABLE `blackout_instances`
+  ADD CONSTRAINT `fk_bi_series` FOREIGN KEY (`blackout_series_id`) REFERENCES `blackout_series` (`blackout_series_id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `blackout_series`
+--
+ALTER TABLE `blackout_series`
+  ADD CONSTRAINT `fk_bs_owner` FOREIGN KEY (`owner_id`) REFERENCES `sys_user` (`sys_user_id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `blackout_series_resources`
+--
+ALTER TABLE `blackout_series_resources`
+  ADD CONSTRAINT `fk_bsr_resource` FOREIGN KEY (`resource_id`) REFERENCES `resources` (`resource_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_bsr_series` FOREIGN KEY (`blackout_series_id`) REFERENCES `blackout_series` (`blackout_series_id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `budget`
@@ -7560,6 +8545,12 @@ ALTER TABLE `cost_center`
   ADD CONSTRAINT `fk_cost_center_user` FOREIGN KEY (`sys_user_id`) REFERENCES `sys_user` (`sys_user_id`);
 
 --
+-- Restrições para tabelas `credit_log`
+--
+ALTER TABLE `credit_log`
+  ADD CONSTRAINT `fk_cl_user` FOREIGN KEY (`sys_user_id`) REFERENCES `sys_user` (`sys_user_id`) ON DELETE CASCADE;
+
+--
 -- Restrições para tabelas `customer`
 --
 ALTER TABLE `customer`
@@ -7716,6 +8707,13 @@ ALTER TABLE `group_batch`
   ADD CONSTRAINT `fk_group_batch_class` FOREIGN KEY (`class_id`) REFERENCES `category` (`category_id`),
   ADD CONSTRAINT `fk_group_batch_unit` FOREIGN KEY (`sys_unit_id`) REFERENCES `sys_unit` (`sys_unit_id`),
   ADD CONSTRAINT `fk_group_batch_users` FOREIGN KEY (`sys_user_id`) REFERENCES `sys_user` (`sys_user_id`);
+
+--
+-- Restrições para tabelas `group_resource_permissions`
+--
+ALTER TABLE `group_resource_permissions`
+  ADD CONSTRAINT `fk_grp_group` FOREIGN KEY (`sys_group_id`) REFERENCES `sys_group` (`sys_group_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_grp_resource` FOREIGN KEY (`resource_id`) REFERENCES `resources` (`resource_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `integration_mapping`
@@ -8047,6 +9045,12 @@ ALTER TABLE `region`
   ADD CONSTRAINT `fk_region_unit` FOREIGN KEY (`sys_unit_id`) REFERENCES `sys_unit` (`sys_unit_id`);
 
 --
+-- Restrições para tabelas `reminders`
+--
+ALTER TABLE `reminders`
+  ADD CONSTRAINT `fk_reminders_user` FOREIGN KEY (`user_id`) REFERENCES `sys_user` (`sys_user_id`) ON DELETE CASCADE;
+
+--
 -- Restrições para tabelas `report_definition`
 --
 ALTER TABLE `report_definition`
@@ -8058,6 +9062,101 @@ ALTER TABLE `report_definition`
 --
 ALTER TABLE `request_for_quotation`
   ADD CONSTRAINT `fk_request_for_quotation_company_id` FOREIGN KEY (`company_id`) REFERENCES `company` (`company_id`);
+
+--
+-- Restrições para tabelas `reservation_accessories`
+--
+ALTER TABLE `reservation_accessories`
+  ADD CONSTRAINT `fk_ra_accessory` FOREIGN KEY (`accessory_id`) REFERENCES `accessories` (`accessory_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_ra_series` FOREIGN KEY (`series_id`) REFERENCES `reservation_series` (`series_id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `reservation_files`
+--
+ALTER TABLE `reservation_files`
+  ADD CONSTRAINT `fk_rf_series` FOREIGN KEY (`series_id`) REFERENCES `reservation_series` (`series_id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `reservation_guests`
+--
+ALTER TABLE `reservation_guests`
+  ADD CONSTRAINT `fk_rg_instance` FOREIGN KEY (`reservation_instance_id`) REFERENCES `reservation_instances` (`reservation_instance_id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `reservation_instances`
+--
+ALTER TABLE `reservation_instances`
+  ADD CONSTRAINT `fk_ri_series` FOREIGN KEY (`series_id`) REFERENCES `reservation_series` (`series_id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `reservation_reminders`
+--
+ALTER TABLE `reservation_reminders`
+  ADD CONSTRAINT `fk_rremainder_series` FOREIGN KEY (`series_id`) REFERENCES `reservation_series` (`series_id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `reservation_resources`
+--
+ALTER TABLE `reservation_resources`
+  ADD CONSTRAINT `fk_rr_resource` FOREIGN KEY (`resource_id`) REFERENCES `resources` (`resource_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_rresources_series` FOREIGN KEY (`series_id`) REFERENCES `reservation_series` (`series_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `reservation_series`
+--
+ALTER TABLE `reservation_series`
+  ADD CONSTRAINT `fk_rs_owner` FOREIGN KEY (`owner_id`) REFERENCES `sys_user` (`sys_user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_rs_status` FOREIGN KEY (`status_id`) REFERENCES `reservation_statuses` (`status_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_rs_type` FOREIGN KEY (`type_id`) REFERENCES `reservation_types` (`type_id`) ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `reservation_users`
+--
+ALTER TABLE `reservation_users`
+  ADD CONSTRAINT `fk_ru_instance` FOREIGN KEY (`reservation_instance_id`) REFERENCES `reservation_instances` (`reservation_instance_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_ru_user` FOREIGN KEY (`sys_user_id`) REFERENCES `sys_user` (`sys_user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `reservation_waitlist_requests`
+--
+ALTER TABLE `reservation_waitlist_requests`
+  ADD CONSTRAINT `fk_wwr_resource` FOREIGN KEY (`resource_id`) REFERENCES `resources` (`resource_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_wwr_schedule` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`schedule_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_wwr_user` FOREIGN KEY (`sys_user_id`) REFERENCES `sys_user` (`sys_user_id`) ON DELETE SET NULL;
+
+--
+-- Restrições para tabelas `resources`
+--
+ALTER TABLE `resources`
+  ADD CONSTRAINT `fk_resources_schedule` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`schedule_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_resources_type` FOREIGN KEY (`resource_type_id`) REFERENCES `resource_types` (`resource_type_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_resources_unit` FOREIGN KEY (`sys_unit_id`) REFERENCES `sys_unit` (`sys_unit_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `resource_groups`
+--
+ALTER TABLE `resource_groups`
+  ADD CONSTRAINT `fk_resource_groups_parent` FOREIGN KEY (`parent_id`) REFERENCES `resource_groups` (`resource_group_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `resource_group_assignment`
+--
+ALTER TABLE `resource_group_assignment`
+  ADD CONSTRAINT `fk_rga_group` FOREIGN KEY (`resource_group_id`) REFERENCES `resource_groups` (`resource_group_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_rga_resource` FOREIGN KEY (`resource_id`) REFERENCES `resources` (`resource_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `resource_images`
+--
+ALTER TABLE `resource_images`
+  ADD CONSTRAINT `fk_ri_resource` FOREIGN KEY (`resource_id`) REFERENCES `resources` (`resource_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `resource_type_assignment`
+--
+ALTER TABLE `resource_type_assignment`
+  ADD CONSTRAINT `fk_rta_resource` FOREIGN KEY (`resource_id`) REFERENCES `resources` (`resource_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_rta_type` FOREIGN KEY (`resource_type_id`) REFERENCES `resource_types` (`resource_type_id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `rfq_item`
@@ -8106,6 +9205,19 @@ ALTER TABLE `sales_order_item`
   ADD CONSTRAINT `fk_sales_order_item_uom_id` FOREIGN KEY (`uom_id`) REFERENCES `units_of_measurement` (`uom_id`),
   ADD CONSTRAINT `fk_sales_order_item_variation_id` FOREIGN KEY (`variation_id`) REFERENCES `product_variation` (`variation_id`),
   ADD CONSTRAINT `fk_sales_order_item_warehouse_id` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouse` (`warehouse_id`);
+
+--
+-- Restrições para tabelas `saved_reports`
+--
+ALTER TABLE `saved_reports`
+  ADD CONSTRAINT `fk_sr_user` FOREIGN KEY (`sys_user_id`) REFERENCES `sys_user` (`sys_user_id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `schedules`
+--
+ALTER TABLE `schedules`
+  ADD CONSTRAINT `fk_schedules_layout` FOREIGN KEY (`layout_id`) REFERENCES `layouts` (`layout_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_schedules_unit` FOREIGN KEY (`sys_unit_id`) REFERENCES `sys_unit` (`sys_unit_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `serial_tracking`
@@ -8350,6 +9462,12 @@ ALTER TABLE `tax_code`
   ADD CONSTRAINT `fk_tax_code_receivable_account` FOREIGN KEY (`receivable_account_id`) REFERENCES `account` (`account_id`);
 
 --
+-- Restrições para tabelas `time_blocks`
+--
+ALTER TABLE `time_blocks`
+  ADD CONSTRAINT `fk_time_blocks_layout` FOREIGN KEY (`layout_id`) REFERENCES `layouts` (`layout_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Restrições para tabelas `transaction`
 --
 ALTER TABLE `transaction`
@@ -8401,6 +9519,31 @@ ALTER TABLE `trip_document`
 ALTER TABLE `user_company_access`
   ADD CONSTRAINT `fk_user_access_company` FOREIGN KEY (`company_id`) REFERENCES `company` (`company_id`),
   ADD CONSTRAINT `fk_user_access_user` FOREIGN KEY (`sys_user_id`) REFERENCES `sys_user` (`sys_user_id`);
+
+--
+-- Restrições para tabelas `user_email_preferences`
+--
+ALTER TABLE `user_email_preferences`
+  ADD CONSTRAINT `fk_uep_user` FOREIGN KEY (`sys_user_id`) REFERENCES `sys_user` (`sys_user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `user_preferences`
+--
+ALTER TABLE `user_preferences`
+  ADD CONSTRAINT `fk_up_user` FOREIGN KEY (`sys_user_id`) REFERENCES `sys_user` (`sys_user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `user_resource_permissions`
+--
+ALTER TABLE `user_resource_permissions`
+  ADD CONSTRAINT `fk_urp_resource` FOREIGN KEY (`resource_id`) REFERENCES `resources` (`resource_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_urp_user` FOREIGN KEY (`sys_user_id`) REFERENCES `sys_user` (`sys_user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `user_session`
+--
+ALTER TABLE `user_session`
+  ADD CONSTRAINT `fk_us_user` FOREIGN KEY (`sys_user_id`) REFERENCES `sys_user` (`sys_user_id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `validation_rule`

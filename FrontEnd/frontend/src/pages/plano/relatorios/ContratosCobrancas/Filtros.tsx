@@ -33,14 +33,14 @@ export function ContratosCobrancasFiltros({
 	setFiltersOpen,
 }: Props) {
 	const activeBadges = [
-		filtros.codigoIni && `Cód ≥ ${filtros.codigoIni}`,
-		filtros.codigoFim && `Cód ≤ ${filtros.codigoFim}`,
+		filtros.codigoIni && `Cód >= ${filtros.codigoIni}`,
+		filtros.codigoFim && `Cód <= ${filtros.codigoFim}`,
 		filtros.cobrador && `Cobrador: ${filtros.cobrador}`,
 		filtros.grupo && `Grupo: ${filtros.grupo}`,
 		filtros.situacao &&
 			`Sit: ${SITUACAO_OPTS.find((o) => o.value === filtros.situacao)?.label}`,
-		filtros.dataIni && `Adm ≥ ${filtros.dataIni}`,
-		filtros.dataFim && `Adm ≤ ${filtros.dataFim}`,
+		filtros.dataIni && `Adm >= ${filtros.dataIni}`,
+		filtros.dataFim && `Adm <= ${filtros.dataFim}`,
 	].filter(Boolean) as string[];
 
 	function set(field: keyof Filtros, value: string) {
@@ -53,8 +53,8 @@ export function ContratosCobrancasFiltros({
 				className="flex items-center gap-2 px-3 py-2 cursor-pointer select-none hover:bg-gray-50 transition-colors rounded-t"
 				onClick={() => setFiltersOpen((o) => !o)}
 			>
-				<span className="text-xs text-gray-500">{filtersOpen ? "▲" : "▼"}</span>
-				<span className="text-sm font-medium text-gray-600">Filtros</span>
+				<span className="text-xs text-gray-500">{filtersOpen ? '▲' : '▼'}</span>
+			<span className="text-sm font-medium text-gray-600">Filtros</span>
 				{activeBadges.length > 0 && (
 					<span className="bg-blue-900 text-white text-xs px-1.5 py-0.5 rounded-full">
 						{activeBadges.length}
@@ -75,7 +75,7 @@ export function ContratosCobrancasFiltros({
 							e.stopPropagation();
 							setFiltros(FILTROS_EMPTY);
 						}}
-						className="ml-auto text-xs text-gray-400 hover:text-red-500 transition-colors"
+						className="text-xs text-gray-400 hover:text-red-500 transition-colors"
 					>
 						Limpar
 					</button>
